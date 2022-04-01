@@ -27,14 +27,18 @@ public class LobbyManager : MonoBehaviour
     bool connected = false;
     int pCount = 1;
     GameObject[] players = new GameObject[4];
+    Player localUser;
     // Start is called before the first frame update
     void Start()
     {
+        //Instantiating variables
         ValueStorage vs = GameObject.Find("NetworkManager").GetComponent<ValueStorage>();
         GameObject g = Instantiate(playerPrefab);
-        g.GetComponent<Player>().setName(vs.GetUsername());
+        localUser = g.GetComponent<Player>();
+        localUser.setName(vs.GetUsername());
         g.name = vs.GetUsername();
         players[0] = g;
+        //Set listenners for the buttons
         join.onClick.AddListener(joinServer);
         back.onClick.AddListener(goBack);
         ready.onClick.AddListener(readyUp);
@@ -43,6 +47,7 @@ public class LobbyManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //Updates the lobby UI
         if (players[0] != null){
             player1.text = players[0].GetComponent<Player>().getName();
             ph1.enabled = false;
@@ -59,12 +64,14 @@ public class LobbyManager : MonoBehaviour
             player4.text = players[3].GetComponent<Player>().getName();
             ph4.enabled = false;
         }
-        //Need code to listen for messages
+        //Instead of using a while loop, taking advantage of Unity's built in Update function.
+        //This does, however, mean I need to include a timeout for if no message is sent.
+        //Essentially, this portion is to listen for more people joining the lobby, and whether or
+        //not they are ready to start. READY NOT YET IMPLEMENTED
         if(connected){
             byte[] data = new byte[256];
             try{
-                players[0].GetComponent<Player>().GetNetStream().Read(data,0,data.Length);
-                string result = Encoding.ASCII.GetString(data).Trim();
+                string result = localUser.Read();
                 if (result.CompareTo("") != 0)
                     Debug.Log(result);
                 string[] users = result.Split(',');
@@ -90,6 +97,9 @@ public class LobbyManager : MonoBehaviour
         }
     }
     void goBack(){
+        if (connected){
+            localUser.Write("*EXIT");
+        }
         GameObject[] temp = Object.FindObjectsOfType<GameObject>();
         for (int i = 0; i < temp.Length; i++){
             Destroy(temp[i]);
@@ -99,16 +109,17 @@ public class LobbyManager : MonoBehaviour
     void joinServer(){
         if (connected == false){
             Debug.Log("Attempting connection: " + IPField.text);
-            players[0].GetComponent<Player>().setClient(IPField.text, port);
-            players[0].GetComponent<Player>().GetClient().ReceiveTimeout = 100;
-            byte[] data = System.Text.Encoding.ASCII.GetBytes(players[0].name);
-            players[0].GetComponent<Player>().GetNetStream().Write(data,0,data.Length);
+            localUser.setClient(IPField.text, port);
+            localUser.GetClient().ReceiveTimeout = 100;
+            localUser.Write(players[0].name);
             Debug.Log("Sent name to server");
             connected = true;
         }
     }
     void readyUp(){
-
+        if (connected){
+            localUser.Write("*READY");
+        }
     }
     void startGame(){
 
