@@ -35,7 +35,7 @@ public class LobbyManager : MonoBehaviour
         ValueStorage vs = GameObject.Find("NetworkManager").GetComponent<ValueStorage>();
         GameObject g = Instantiate(playerPrefab);
         localUser = g.GetComponent<Player>();
-        localUser.setName(vs.GetUsername());
+        localUser.SetName(vs.GetUsername());
         g.name = vs.GetUsername();
         players[0] = g;
         //Set listenners for the buttons
@@ -49,19 +49,19 @@ public class LobbyManager : MonoBehaviour
     {
         //Updates the lobby UI
         if (players[0] != null){
-            player1.text = players[0].GetComponent<Player>().getName();
+            player1.text = players[0].GetComponent<Player>().GetName();
             ph1.enabled = false;
         }
         if (players[1] != null){
-            player2.text = players[1].GetComponent<Player>().getName();
+            player2.text = players[1].GetComponent<Player>().GetName();
             ph2.enabled = false;
         }
         if (players[2] != null){
-            player3.text = players[2].GetComponent<Player>().getName();
+            player3.text = players[2].GetComponent<Player>().GetName();
             ph3.enabled = false;
         }
         if (players[3] != null){
-            player4.text = players[3].GetComponent<Player>().getName();
+            player4.text = players[3].GetComponent<Player>().GetName();
             ph4.enabled = false;
         }
         //Instead of using a while loop, taking advantage of Unity's built in Update function.
@@ -87,7 +87,7 @@ public class LobbyManager : MonoBehaviour
                     if (match == false){
                         players[pCount] = Instantiate(playerPrefab);
                         players[pCount].name = users[i];
-                        players[pCount].GetComponent<Player>().setName(users[i]);
+                        players[pCount].GetComponent<Player>().SetName(users[i]);
                         pCount++;
                     }
                 }
@@ -99,6 +99,7 @@ public class LobbyManager : MonoBehaviour
     void goBack(){
         if (connected){
             localUser.Write("*EXIT");
+            localUser.GetClient().Close();
         }
         GameObject[] temp = Object.FindObjectsOfType<GameObject>();
         for (int i = 0; i < temp.Length; i++){
@@ -109,7 +110,7 @@ public class LobbyManager : MonoBehaviour
     void joinServer(){
         if (connected == false){
             Debug.Log("Attempting connection: " + IPField.text);
-            localUser.setClient(IPField.text, port);
+            localUser.SetClient(IPField.text, port);
             localUser.GetClient().ReceiveTimeout = 100;
             localUser.Write(players[0].name);
             Debug.Log("Sent name to server");

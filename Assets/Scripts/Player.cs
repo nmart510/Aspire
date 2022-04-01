@@ -12,16 +12,16 @@ public class Player : MonoBehaviour
     NetworkStream stream;
     byte[] data;
 
-    public string getName(){
+    public string GetName(){
         return username;
     }
-    public void setName(string _name){
+    public void SetName(string _name){
         username = _name;
     }
     void Awake(){
         DontDestroyOnLoad(transform.gameObject);
     }
-    public void setClient(string ip, int port){
+    public void SetClient(string ip, int port){
         client = new TcpClient(ip, port);
         stream = client.GetStream();
     }
