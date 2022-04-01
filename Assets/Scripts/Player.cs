@@ -11,6 +11,7 @@ public class Player : MonoBehaviour
     TcpClient client;
     NetworkStream stream;
     byte[] data;
+    bool ready = false;
 
     public string GetName(){
         return username;
@@ -39,5 +40,11 @@ public class Player : MonoBehaviour
         byte[] data = new byte[256];
         stream.Read(data,0,data.Length);
         return Encoding.ASCII.GetString(data).Trim();
+    }
+    public bool IsReady(){
+        return ready;
+    }
+    public void IsReady(bool _ready){
+        ready = _ready;
     }
 }

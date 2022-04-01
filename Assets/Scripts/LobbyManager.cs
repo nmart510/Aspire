@@ -50,20 +50,32 @@ public class LobbyManager : MonoBehaviour
         //Updates the lobby UI
         if (players[0] != null){
             player1.text = players[0].GetComponent<Player>().GetName();
+            if (players[0].GetComponent<Player>().IsReady())
+                player1.color = Color.green;
+            else player1.color = Color.black;
             ph1.enabled = false;
-        }
+        } else { player1.text = ""; ph1.enabled = true; }
         if (players[1] != null){
             player2.text = players[1].GetComponent<Player>().GetName();
+            if (players[1].GetComponent<Player>().IsReady())
+                player2.color = Color.green;
+            else player2.color = Color.black;
             ph2.enabled = false;
-        }
+        } else { player2.text = ""; ph2.enabled = true; }
         if (players[2] != null){
             player3.text = players[2].GetComponent<Player>().GetName();
+            if (players[2].GetComponent<Player>().IsReady())
+                player3.color = Color.green;
+            else player3.color = Color.black;
             ph3.enabled = false;
-        }
+        } else { player3.text = ""; ph3.enabled = true; }
         if (players[3] != null){
             player4.text = players[3].GetComponent<Player>().GetName();
+            if (players[3].GetComponent<Player>().IsReady())
+                player4.color = Color.green;
+            else player4.color = Color.black;
             ph4.enabled = false;
-        }
+        } else { player4.text = ""; ph4.enabled = true; }
         //Instead of using a while loop, taking advantage of Unity's built in Update function.
         //This does, however, mean I need to include a timeout for if no message is sent.
         //Essentially, this portion is to listen for more people joining the lobby, and whether or
@@ -72,24 +84,49 @@ public class LobbyManager : MonoBehaviour
             byte[] data = new byte[256];
             try{
                 string result = localUser.Read();
-                if (result.CompareTo("") != 0)
-                    Debug.Log(result);
-                string[] users = result.Split(',');
-                for (int i = 0; i < users.Length; i ++){
-                    bool match = false;
-                    for (int j = 0; j < 4; j++){
-                        if (players[j] != null)
-                        if (players[j].name.CompareTo(users[i])==0){
-                            match = true;
-                            break;
+                Debug.Log(result);
+                string[] message = result.Split(',');
+                //for when a player leaves the lobby
+                if (message[0].CompareTo("*LIST") == 0){
+                    for (int i = 1; i < message.Length; i ++){
+                        bool match = false;
+                        for (int j = 0; j < 4; j++){
+                            if (players[j] != null)
+                            if (players[j].name.CompareTo(message[i])==0){
+                                match = true;
+                                break;
+                            }
+                        }
+                        if (match == false){
+                            players[pCount] = Instantiate(playerPrefab);
+                            players[pCount].name = message[i];
+                            players[pCount].GetComponent<Player>().SetName(message[i]);
+                            pCount++;
                         }
                     }
-                    if (match == false){
-                        players[pCount] = Instantiate(playerPrefab);
-                        players[pCount].name = users[i];
-                        players[pCount].GetComponent<Player>().SetName(users[i]);
-                        pCount++;
+                } else if (message[0].CompareTo("*REMOVE") == 0) {
+                    for (int i = 0; i < pCount; i++){
+                        if (players[i].name.CompareTo(message[1]) == 0){
+                            Destroy(players[i]);
+                            players[i] = null;
+                            for(int k = pCount - (i+1); k < pCount - 1; k++){
+                                if (players[k] == null && players[k+1] != null){
+                                    players[k] = players[k+1];
+                                    players[k+1] = null;
+                                }
+                            }
+                        }
                     }
+                } else if (message[0].CompareTo("*READY") == 0) {
+                    for (int i = 0; i < pCount; i++){
+                        players[i].GetComponent<Player>().IsReady(false);
+                        for (int j = 1; j < message.Length; j++){
+                            if (players[i].name.CompareTo(message[j])==0)
+                                players[i].GetComponent<Player>().IsReady(true);
+                        }
+                    }
+                } else if (message[0].CompareTo("*START") == 0) {
+                    //Load scene Game
                 }
             } catch(IOException e){
                 //This is solely to ignore a IOException set up to occur on purpose
