@@ -52,6 +52,7 @@ public class LobbyManager : MonoBehaviour
             player1.text = players[0].GetComponent<Player>().GetName();
             if (players[0].GetComponent<Player>().IsReady())
                 player1.color = Color.green;
+            else if (connected == false) player1.color = new Color(.4f,.4f,.4f,1);
             else player1.color = Color.black;
             ph1.enabled = false;
         } else { player1.text = ""; ph1.enabled = true; }
@@ -88,7 +89,7 @@ public class LobbyManager : MonoBehaviour
                 string[] message = result.Split(',');
                 //for when a player leaves the lobby
                 if (message[0].CompareTo("*LIST") == 0){
-                    for (int i = 1; i < message.Length; i ++){
+                    for (int i = 1; i < message.Length; i++){
                         bool match = false;
                         for (int j = 0; j < 4; j++){
                             if (players[j] != null)
@@ -104,8 +105,10 @@ public class LobbyManager : MonoBehaviour
                             pCount++;
                         }
                     }
+                    Debug.Log(pCount);
                 } else if (message[0].CompareTo("*REMOVE") == 0) {
                     for (int i = 0; i < pCount; i++){
+                        if (players[i] != null)
                         if (players[i].name.CompareTo(message[1]) == 0){
                             Destroy(players[i]);
                             players[i] = null;
@@ -118,15 +121,19 @@ public class LobbyManager : MonoBehaviour
                         }
                     }
                     pCount--;
+                    Debug.Log(pCount);
                 } else if (message[0].CompareTo("*READY") == 0) {
                     for (int i = 0; i < pCount; i++){
-                        players[i].GetComponent<Player>().IsReady(false);
-                        for (int j = 1; j < message.Length; j++){
-                            if (players[i].name.CompareTo(message[j])==0)
-                                players[i].GetComponent<Player>().IsReady(true);
+                        if (players[i] != null){
+                            players[i].GetComponent<Player>().IsReady(false);
+                            for (int j = 1; j < message.Length; j++){
+                                if (players[i].name.CompareTo(message[j])==0)
+                                    players[i].GetComponent<Player>().IsReady(true);
+                            }
                         }
                     }
                 } else if (message[0].CompareTo("*START") == 0) {
+                    Debug.Log("Start game!");
                     //Load scene Game
                 }
             } catch(IOException e){
