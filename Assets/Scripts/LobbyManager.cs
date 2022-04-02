@@ -109,7 +109,7 @@ public class LobbyManager : MonoBehaviour
                         if (players[i].name.CompareTo(message[1]) == 0){
                             Destroy(players[i]);
                             players[i] = null;
-                            for(int k = pCount - (i+1); k < pCount - 1; k++){
+                            for(int k = i; k < pCount - 1; k++){
                                 if (players[k] == null && players[k+1] != null){
                                     players[k] = players[k+1];
                                     players[k+1] = null;
@@ -117,6 +117,7 @@ public class LobbyManager : MonoBehaviour
                             }
                         }
                     }
+                    pCount--;
                 } else if (message[0].CompareTo("*READY") == 0) {
                     for (int i = 0; i < pCount; i++){
                         players[i].GetComponent<Player>().IsReady(false);
@@ -134,14 +135,16 @@ public class LobbyManager : MonoBehaviour
         }
     }
     void goBack(){
-        if (connected){
-            localUser.Write("*EXIT");
-            localUser.GetClient().Close();
-        }
-        GameObject[] temp = Object.FindObjectsOfType<GameObject>();
-        for (int i = 0; i < temp.Length; i++){
-            Destroy(temp[i]);
-        }
+        try{
+            if (connected){
+                localUser.Write("*EXIT");
+                localUser.GetClient().Close();
+            }
+            GameObject[] temp = Object.FindObjectsOfType<GameObject>();
+            for (int i = 0; i < temp.Length; i++){
+                Destroy(temp[i]);
+            }
+        } catch (IOException e){}
         SceneManager.LoadScene("Main");
     }
     void joinServer(){
