@@ -25,17 +25,18 @@ public class LobbyManager : MonoBehaviour
     public Button ready;
     public GameObject playerPrefab;
     bool connected = false;
-    int pCount = 1;
-    GameObject[] players = new GameObject[4];
+    List<GameObject> players;
     Player localUser;
     // Start is called before the first frame update
     void Start()
     {
         //Instantiating variables
+        players = new List<GameObject>();
         ValueStorage vs = GameObject.Find("NetworkManager").GetComponent<ValueStorage>();
         GameObject g = Instantiate(playerPrefab);
         localUser = g.GetComponent<Player>();
         localUser.SetName(vs.GetUsername());
+        vs.setLocalPlayer(localUser);
         g.name = vs.GetUsername();
         players[0] = g;
         //Set listenners for the buttons
@@ -87,7 +88,8 @@ public class LobbyManager : MonoBehaviour
                 string result = localUser.Read();
                 Debug.Log(result);
                 string[] message = result.Split(',');
-                //for when a player leaves the lobby
+
+                //Will be sent whenever a player joins the lobby
                 if (message[0].CompareTo("*LIST") == 0){
                     for (int i = 1; i < message.Length; i++){
                         bool match = false;
@@ -99,31 +101,27 @@ public class LobbyManager : MonoBehaviour
                             }
                         }
                         if (match == false){
-                            players[pCount] = Instantiate(playerPrefab);
-                            players[pCount].name = message[i];
-                            players[pCount].GetComponent<Player>().SetName(message[i]);
-                            pCount++;
+                            players[players.Count] = Instantiate(playerPrefab);
+                            players[players.Count].name = message[i];
+                            players[players.Count].GetComponent<Player>().SetName(message[i]);
                         }
                     }
-                    Debug.Log(pCount);
+                    Debug.Log(players.Count);
+
+                //Will be sent whenever a player leaves the lobby
                 } else if (message[0].CompareTo("*REMOVE") == 0) {
-                    for (int i = 0; i < pCount; i++){
+                    for (int i = 0; i < players.Count; i++){
                         if (players[i] != null)
                         if (players[i].name.CompareTo(message[1]) == 0){
                             Destroy(players[i]);
-                            players[i] = null;
-                            for(int k = i; k < pCount - 1; k++){
-                                if (players[k] == null && players[k+1] != null){
-                                    players[k] = players[k+1];
-                                    players[k+1] = null;
-                                }
-                            }
+                            players.RemoveAt(i);
                         }
                     }
-                    pCount--;
-                    Debug.Log(pCount);
+                    Debug.Log(players.Count);
+
+                //Will be sent whenever a player joins, leaves or readies up
                 } else if (message[0].CompareTo("*READY") == 0) {
-                    for (int i = 0; i < pCount; i++){
+                    for (int i = 0; i < players.Count; i++){
                         if (players[i] != null){
                             players[i].GetComponent<Player>().IsReady(false);
                             for (int j = 1; j < message.Length; j++){
@@ -132,9 +130,13 @@ public class LobbyManager : MonoBehaviour
                             }
                         }
                     }
+
+                //Will be sent to start the game
                 } else if (message[0].CompareTo("*START") == 0) {
                     Debug.Log("Start game!");
-                    //Load scene Game
+                    ValueStorage vs = GameObject.Find("NetworkManager").GetComponent<ValueStorage>();
+                    vs.RecordPlayers(players);
+                    SceneManager.LoadScene("Shop");
                 }
             } catch(IOException e){
                 //This is solely to ignore a IOException set up to occur on purpose

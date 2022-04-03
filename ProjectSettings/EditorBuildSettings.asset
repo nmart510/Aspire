@@ -14,4 +14,16 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Lobby.unity
     guid: c2bd99d4032ce4e458d24059475a52be
+  - enabled: 1
+    path: Assets/Scenes/Boss.unity
+    guid: 59b233851af5dd04492d3daecd9b05d6
+  - enabled: 1
+    path: Assets/Scenes/Dungeon.unity
+    guid: 7bf550f6ed6c49540b6764aadc46fb5e
+  - enabled: 1
+    path: Assets/Scenes/Score.unity
+    guid: a3c1457134b9dc34fa1fe5be8b149ba4
+  - enabled: 1
+    path: Assets/Scenes/Shop.unity
+    guid: 526a8ab2b30214842975acc5d4f09c0a
   m_configObjects: {}
