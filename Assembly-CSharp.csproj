@@ -36,12 +36,17 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
+     <Compile Include="Assets\Scripts\DungeonManager.cs" />
      <Compile Include="Assets\Scripts\ValueStorage.cs" />
      <Compile Include="Assets\Scripts\ShopManager.cs" />
      <Compile Include="Assets\Scripts\Player.cs" />
      <Compile Include="Assets\Scripts\UIManager.cs" />
      <Compile Include="Assets\Scripts\LobbyManager.cs" />
-     <Compile Include="Assets\Scripts\DungeonManager.cs" />
+     <Compile Include="Assets\Scripts\Cards\Equipment.cs" />
+     <Compile Include="Assets\Scripts\Cards\Monster.cs" />
+     <Compile Include="Assets\Scripts\Cards\Ability.cs" />
+     <Compile Include="Assets\Scripts\Cards\MonsterMod.cs" />
+     <Compile Include="Assets\Scripts\Cards\Aspiration.cs" />
     <Reference Include="UnityEngine">
         <HintPath>E:\Unity\Hub\Editor\2020.3.32f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>

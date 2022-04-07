@@ -12,6 +12,24 @@ public class Player : MonoBehaviour
     NetworkStream stream;
     byte[] data;
     bool ready = false;
+    int maxHP = 8;
+    int currentHP = 8;
+    int gold = 7;
+    int victoryPoints = 0;
+    List<Equipment> arsenal = new List<Equipment>();
+    List<Ability> deck = new List<Ability>();
+    List<Ability> hand = new List<Ability>();
+    List<Ability> discard = new List<Ability>();
+    List<Ability> defenses = new List<Ability>();
+    List<Ability> inPlay = new List<Ability>();
+    Equipment equipBody = null;
+    Equipment equipMain = null;
+    Equipment equipOff = null;
+    Equipment equipExtra = null;
+    Equipment aux1 = null;
+    Equipment aux2 = null;
+    Equipment aux3 = null;
+
 
     public string GetName(){
         return username;
@@ -46,5 +64,14 @@ public class Player : MonoBehaviour
     }
     public void IsReady(bool _ready){
         ready = _ready;
+    }
+    public int[] getHealth(){
+        int[] hp = new int[2];
+        hp[0] = currentHP; hp[1] = maxHP; 
+        return hp;
+    }
+    public void takeDamage(int amount){
+        currentHP -= amount;
+        if (currentHP < 0) currentHP = 0;
     }
 }
