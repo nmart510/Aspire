@@ -38,7 +38,7 @@ public class LobbyManager : MonoBehaviour
         localUser.SetName(vs.GetUsername());
         vs.setLocalPlayer(localUser);
         g.name = vs.GetUsername();
-        players[0] = g;
+        players.Add(g);
         //Set listenners for the buttons
         join.onClick.AddListener(joinServer);
         back.onClick.AddListener(goBack);
@@ -49,7 +49,7 @@ public class LobbyManager : MonoBehaviour
     void Update()
     {
         //Updates the lobby UI
-        if (players[0] != null){
+        if (players.Count > 0){
             player1.text = players[0].GetComponent<Player>().GetName();
             if (players[0].GetComponent<Player>().IsReady())
                 player1.color = Color.green;
@@ -57,21 +57,21 @@ public class LobbyManager : MonoBehaviour
             else player1.color = Color.black;
             ph1.enabled = false;
         } else { player1.text = ""; ph1.enabled = true; }
-        if (players[1] != null){
+        if (players.Count > 1){
             player2.text = players[1].GetComponent<Player>().GetName();
             if (players[1].GetComponent<Player>().IsReady())
                 player2.color = Color.green;
             else player2.color = Color.black;
             ph2.enabled = false;
         } else { player2.text = ""; ph2.enabled = true; }
-        if (players[2] != null){
+        if (players.Count > 2){
             player3.text = players[2].GetComponent<Player>().GetName();
             if (players[2].GetComponent<Player>().IsReady())
                 player3.color = Color.green;
             else player3.color = Color.black;
             ph3.enabled = false;
         } else { player3.text = ""; ph3.enabled = true; }
-        if (players[3] != null){
+        if (players.Count > 3){
             player4.text = players[3].GetComponent<Player>().GetName();
             if (players[3].GetComponent<Player>().IsReady())
                 player4.color = Color.green;
@@ -84,7 +84,7 @@ public class LobbyManager : MonoBehaviour
         //not they are ready to start. READY NOT YET IMPLEMENTED
         if(connected){
             byte[] data = new byte[256];
-            try{
+            if(localUser.GetNetStream().DataAvailable){
                 string result = localUser.Read();
                 Debug.Log(result);
                 string[] message = result.Split(',');
@@ -93,41 +93,43 @@ public class LobbyManager : MonoBehaviour
                 if (message[0].CompareTo("*LIST") == 0){
                     for (int i = 1; i < message.Length; i++){
                         bool match = false;
-                        for (int j = 0; j < 4; j++){
-                            if (players[j] != null)
+                        for (int j = 0; j < players.Count; j++){
                             if (players[j].name.CompareTo(message[i])==0){
                                 match = true;
                                 break;
                             }
                         }
                         if (match == false){
-                            players[players.Count] = Instantiate(playerPrefab);
-                            players[players.Count].name = message[i];
-                            players[players.Count].GetComponent<Player>().SetName(message[i]);
+                            players.Add(Instantiate(playerPrefab));
+                            players[players.Count-1].name = message[i];
+                            players[players.Count-1].GetComponent<Player>().SetName(message[i]);
                         }
+                    }
+                    for (int i = 0; i < players.Count; i++){
+                        players[i].GetComponent<Player>().IsReady(false);
                     }
                     Debug.Log(players.Count);
 
                 //Will be sent whenever a player leaves the lobby
                 } else if (message[0].CompareTo("*REMOVE") == 0) {
                     for (int i = 0; i < players.Count; i++){
-                        if (players[i] != null)
                         if (players[i].name.CompareTo(message[1]) == 0){
                             Destroy(players[i]);
                             players.RemoveAt(i);
                         }
+                    }
+                    for (int i = 0; i < players.Count; i++){
+                        players[i].GetComponent<Player>().IsReady(false);
                     }
                     Debug.Log(players.Count);
 
                 //Will be sent whenever a player joins, leaves or readies up
                 } else if (message[0].CompareTo("*READY") == 0) {
                     for (int i = 0; i < players.Count; i++){
-                        if (players[i] != null){
-                            players[i].GetComponent<Player>().IsReady(false);
-                            for (int j = 1; j < message.Length; j++){
-                                if (players[i].name.CompareTo(message[j])==0)
-                                    players[i].GetComponent<Player>().IsReady(true);
-                            }
+                        players[i].GetComponent<Player>().IsReady(false);
+                        for (int j = 1; j < message.Length; j++){
+                            if (players[i].name.CompareTo(message[j])==0)
+                                players[i].GetComponent<Player>().IsReady(true);
                         }
                     }
 
@@ -138,8 +140,6 @@ public class LobbyManager : MonoBehaviour
                     vs.RecordPlayers(players);
                     SceneManager.LoadScene("Shop");
                 }
-            } catch(IOException e){
-                //This is solely to ignore a IOException set up to occur on purpose
             }
         }
     }
