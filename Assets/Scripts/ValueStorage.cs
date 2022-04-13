@@ -5,12 +5,12 @@ using UnityEngine;
 public class ValueStorage : MonoBehaviour
 {
     Player localPlayer;
-    List<GameObject> playerList;
+    List<Player> playerList;
     // Start is called before the first frame update
     void Start()
     {
         DontDestroyOnLoad(this.gameObject);
-        playerList = new List<GameObject>();
+        playerList = new List<Player>();
     }
     string username;
     public void SetUsername(string _username){
@@ -25,10 +25,10 @@ public class ValueStorage : MonoBehaviour
     public void setLocalPlayer(Player p){
         localPlayer = p;
     }
-    public List<GameObject> GetPlayers(){
+    public List<Player> GetPlayers(){
         return playerList;
     }
-    public void RecordPlayers(List<GameObject> pl){
+    public void RecordPlayers(List<Player> pl){
         playerList = pl;
     }
 }

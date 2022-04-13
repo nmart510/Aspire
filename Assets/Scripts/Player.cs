@@ -12,23 +12,27 @@ public class Player : MonoBehaviour
     NetworkStream stream;
     byte[] data;
     bool ready = false;
+    bool inCombat = false;
+    bool isTurn = false;
+    bool isLead = false;
     int maxHP = 8;
     int currentHP = 8;
     int gold = 7;
     int victoryPoints = 0;
+    int AP = 0;
     List<Equipment> arsenal = new List<Equipment>();
     List<Ability> deck = new List<Ability>();
     List<Ability> hand = new List<Ability>();
     List<Ability> discard = new List<Ability>();
     List<Ability> defenses = new List<Ability>();
     List<Ability> inPlay = new List<Ability>();
-    Equipment equipBody = null;
-    Equipment equipMain = null;
-    Equipment equipOff = null;
-    Equipment equipExtra = null;
-    Equipment aux1 = null;
-    Equipment aux2 = null;
-    Equipment aux3 = null;
+    // Equipment equipBody = null;
+    // Equipment equipMain = null;
+    // Equipment equipOff = null;
+    // Equipment equipExtra = null;
+    // Equipment aux1 = null;
+    // Equipment aux2 = null;
+    // Equipment aux3 = null;
 
 
     public string GetName(){
@@ -51,7 +55,7 @@ public class Player : MonoBehaviour
         return stream;
     }
     public void Write(string message){
-            byte[] data = System.Text.Encoding.ASCII.GetBytes(message);
+            byte[] data = System.Text.Encoding.ASCII.GetBytes(message+"/");
             stream.Write(data,0,data.Length);
     }
     public string Read(){
@@ -70,8 +74,50 @@ public class Player : MonoBehaviour
         hp[0] = currentHP; hp[1] = maxHP; 
         return hp;
     }
+    public void setHealth(int amount){
+        currentHP = amount;
+    }
     public void takeDamage(int amount){
         currentHP -= amount;
         if (currentHP < 0) currentHP = 0;
+    }
+    public void changeGold(int amount){
+        gold += amount;
+    }
+    public int getGold(){
+        return gold;
+    }
+    public void changeVP(int amount){
+        victoryPoints += amount;
+    }
+    public int getVP(){
+        return victoryPoints;
+    }
+    public bool InCombat(){
+        return inCombat;
+    }
+    public void InCombat(bool _inCombat){
+        inCombat = _inCombat;
+    }
+    public bool IsTurn(){
+        return isTurn;
+    }
+    public void IsTurn(bool _isTurn){
+        isTurn = _isTurn;
+    }
+    public bool IsLead(){
+        return isLead;
+    }
+    public void IsLead(bool _isLead){
+        isLead = _isLead;
+    }
+    public void SetAP(int amount){
+        AP = amount;
+    }
+    public void changeAP(int amount){
+        AP += amount;
+    }
+    public int getAP(){
+        return AP;
     }
 }
