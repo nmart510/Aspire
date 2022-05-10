@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.IO;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -21,6 +22,7 @@ public class LobbyManager : MonoBehaviour
     public Button ready;
     public GameObject playerPrefab;
     bool connected = false;
+    bool acceptingInput = true;
     List<Player> players;
     Player localUser;
     // Start is called before the first frame update
@@ -78,7 +80,7 @@ public class LobbyManager : MonoBehaviour
         //This does, however, mean I need to include a timeout for if no message is sent.
         //Essentially, this portion is to listen for more people joining the lobby, and whether or
         //not they are ready to start. READY NOT YET IMPLEMENTED
-        if(connected){
+        if(connected && acceptingInput){
             if(localUser.GetNetStream().DataAvailable){
                 //By using a loop for received, any messages that arrive too close 
                 //      together are broken up to be processed separately.
@@ -135,9 +137,21 @@ public class LobbyManager : MonoBehaviour
 
                     //Will be sent to start the game
                     } else if (message[0].CompareTo("*START") == 0) {
-                        Debug.Log("Start game!");
+                        acceptingInput = false;
+                        Debug.Log("Loading Abilities");
+                        List<Ability> abilities = LoadAbilities();
+                        Debug.Log("Loading Common Equipment");
+                        List<Equipment> commonEquipment = LoadEquipment('c');
+                        Debug.Log("Loading Quality Equipment");
+                        List<Equipment> qualityEquipment = LoadEquipment('q');
+                        Debug.Log("Loading Special Equipment");
+                        List<Equipment> specialEquipment = LoadEquipment('s');
+                        List<Monster> monsterList = LoadMonsters();
                         ValueStorage vs = GameObject.Find("NetworkManager").GetComponent<ValueStorage>();
                         vs.RecordPlayers(players);
+                        vs.SetShopAbilities(abilities);
+                        vs.setEquipmentDecks(commonEquipment,qualityEquipment,specialEquipment);
+                        vs.setMonList(monsterList);
                         SceneManager.LoadScene("Shop");
                     }
                 }
@@ -169,5 +183,58 @@ public class LobbyManager : MonoBehaviour
         if (connected){
             localUser.Write("*READY");
         }
+    }
+    List<Ability> LoadAbilities(){ //Loads the list of abilities. NOTE: client side doesn't need to track quantity
+        List<Ability> temp = new List<Ability>();
+        string filepath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName,@"AspireAssets\Abilities\");
+        string shopAblList = Path.Combine(filepath,@"ShopAbilities.txt");
+        var lines = File.ReadAllLines(shopAblList);
+        for (int i = 0; i < lines.Length; i++){
+            string cardName = lines[i];
+            Ability a = new Ability();
+            a.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"));
+            temp.Add(a);
+        }
+        return temp;
+    }
+    List<Equipment> LoadEquipment(char x){
+        List<Equipment> temp = new List<Equipment>();
+        string filepath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName,@"AspireAssets\Equipment\");
+        string shopEqList = "";
+        if (x == 'c') shopEqList = Path.Combine(filepath,@"CommonEquipment.txt");
+        if (x == 'q') shopEqList = Path.Combine(filepath,@"QualityEquipment.txt");
+        if (x == 's') shopEqList = Path.Combine(filepath,@"SpecialEquipment.txt");
+        var lines = File.ReadAllLines(shopEqList);
+        for (int i = 0; i < lines.Length; i++){
+            string cardName = lines[i];
+            if (cardName.Contains(":"))
+                cardName = cardName.Split(':')[0];
+            Equipment e = new Equipment();
+            e.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"));
+            temp.Add(e);
+        }
+        return temp;
+    }
+    List<Monster> LoadMonsters(){
+        List<Monster> temp = new List<Monster>();
+        string filepath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName,@"AspireAssets\Monsters\");
+        string MonsterList = Path.Combine(filepath,@"MonsterList.txt");
+        var lines = File.ReadAllLines(MonsterList);
+        for (int i = 0; i < lines.Length; i++){
+            string cardName = lines[i];
+            Monster a = new Monster();
+            a.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"));
+            temp.Add(a);
+        }
+        string MonsterModList = Path.Combine(filepath,@"MonsterModList.txt");
+        var modlines = File.ReadAllLines(MonsterModList);
+        for (int i = 0; i < modlines.Length; i++){
+            string cardName = modlines[i];
+            Monster a = new Monster();
+            a.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"));
+            a.IsMod(true);
+            temp.Add(a);
+        }
+        return temp;
     }
 }
