@@ -148,12 +148,6 @@ public class DungeonManager : MonoBehaviour
     List<Player> combatants;
     //Monster specific variables here
     Monster monster = null;
-    int monAbilityShieldMax = 0;
-    int monAbilityShield = 0;
-    int monShieldMax = 0;
-    int monShield = 0;
-    int monHealthMax = 0;
-    int monHealth = 0;
 
     //boolean values for the different steps
     bool lobbyStep = false;
@@ -339,27 +333,6 @@ public class DungeonManager : MonoBehaviour
         if (combatStep && combatants.Contains(localUser) && inHand.Count == 0){
             inHand = localUser.Deck().Draw(2);
             ReloadHand();
-        }
-
-        //Display updated Monster stats
-        if (monster == null){
-            txtMonsterHealth.text = "NA";
-            txtMonsterAbilityShields.text = "NA";
-            txtMonsterShields.text = "NA";
-            imgMonsterHealth.transform.localScale = new Vector3(0,1,1);
-            imgMonsterAbilityShields.transform.localScale = new Vector3(0,1,1);
-            imgMonsterShields.transform.localScale = new Vector3(0,1,1);
-        } else {
-            txtMonsterHealth.text = monHealth+"/"+monHealthMax;
-            txtMonsterAbilityShields.text =  monAbilityShield+"/"+monAbilityShieldMax;
-            txtMonsterShields.text =  monShield+"/"+monShieldMax;
-            imgMonsterHealth.transform.localScale = new Vector3(monHealth/(float)monHealthMax,1,1);
-            if (monAbilityShieldMax > 0)
-                imgMonsterAbilityShields.transform.localScale = new Vector3(monAbilityShield/(float)monAbilityShieldMax,1,1);
-            else imgMonsterAbilityShields.transform.localScale = new Vector3(0,1,1);
-            if (monShieldMax > 0)
-                imgMonsterShields.transform.localScale = new Vector3(monShield/(float)monShieldMax,1,1);
-            else imgMonsterShields.transform.localScale = new Vector3(0,1,1);
         }
         //Sets color of names in lobby based on status
         if (combatants.Contains(players[0])){
@@ -576,7 +549,7 @@ public class DungeonManager : MonoBehaviour
                     
                     }//Receives the results of an attack made by a player
                     if (message[0].CompareTo("*RESULT") == 0){
-                        int.TryParse(message[1],out monHealth);
+                        //int.TryParse(message[1],out monHealth);
                     }//Receives a message of which player it is now the turn of
                     if (message[0].CompareTo("*NEXT") == 0){
                         if(localUser.GetName().CompareTo(message[1]) == 0) {
@@ -708,12 +681,13 @@ public class DungeonManager : MonoBehaviour
     void LoadMonster(string name, string[] mods){
         //Loads in monster based on name.
         //For now, default training dummy
-        monHealth = monster.getStats()[0];
-        monHealthMax = monster.getStats()[0];
-        monAbilityShield = monster.getStats()[2];
-        monAbilityShieldMax = monster.getStats()[2];
-        monShield = monster.getStats()[1];
-        monShieldMax = monster.getStats()[1];
+        // foreach (Monster m in monster
+        // monHealth = monster.getStats()[0];
+        // monHealthMax = monster.getStats()[0];
+        // monAbilityShield = monster.getStats()[2];
+        // monAbilityShieldMax = monster.getStats()[2];
+        // monShield = monster.getStats()[1];
+        // monShieldMax = monster.getStats()[1];
     }
     void clearMonster(){
         //Destroy(monster.gameObject);
@@ -1584,6 +1558,19 @@ public class DungeonManager : MonoBehaviour
                 imgAuxShield3.transform.parent.gameObject.SetActive(false);
         } else btnAux3.image.sprite = empty;
     }    
+    void ReloadMonster(){        
+        if (monster == null){
+            txtMonsterHealth.text = "NA";
+            txtMonsterAbilityShields.text = "NA";
+            txtMonsterShields.text = "NA";
+            imgMonsterHealth.transform.localScale = new Vector3(0,1,1);
+            imgMonsterAbilityShields.transform.localScale = new Vector3(0,1,1);
+            imgMonsterShields.transform.localScale = new Vector3(0,1,1);
+        } else {
+            //txtMonsterHealth.text = 
+        }
+
+    }
     void displayEquipItemMenu(string equipSlot){
         equippingSlot = equipSlot;
         if (equipSlot.Contains("Aux")) equipSlot = "Auxiliary";

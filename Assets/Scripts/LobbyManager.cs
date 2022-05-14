@@ -221,18 +221,17 @@ public class LobbyManager : MonoBehaviour
         string MonsterList = Path.Combine(filepath,@"MonsterList.txt");
         var lines = File.ReadAllLines(MonsterList);
         for (int i = 0; i < lines.Length; i++){
-            string cardName = lines[i];
+            string cardName = lines[i].Split(':')[0];
             Monster a = new Monster();
-            a.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"));
+            a.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"),false);
             temp.Add(a);
         }
         string MonsterModList = Path.Combine(filepath,@"MonsterModList.txt");
         var modlines = File.ReadAllLines(MonsterModList);
         for (int i = 0; i < modlines.Length; i++){
-            string cardName = modlines[i];
+            string cardName = modlines[i].Split(':')[0];
             Monster a = new Monster();
-            a.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"));
-            a.IsMod(true);
+            a.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"),true);
             temp.Add(a);
         }
         return temp;

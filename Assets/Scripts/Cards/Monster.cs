@@ -130,16 +130,29 @@ public class Monster
     int ethereal = 0;
     bool isMod = false;
     List<Monster> mods = null;
+    int currentHP = 0;
+    int currentShields = 0;
+    int currentPowerShields = 0;
+    int currentAbilityShields = 0;
+    int currentAbilityPowerShields = 0;
+    int trainedShields = 0;
+    int gemCount = 0;
 
-    public void loadCard(string filepath, string imagepath){
+    public void loadCard(string filepath, string imagepath, bool _isMod){
         
         //Loading image
+        isMod = _isMod;
         byte[] imageData = System.IO.File.ReadAllBytes(imagepath);
         int width = 750;
         int height = 1125;
+        if (isMod){
+            width = 180;
+            height = 474;
+        }
         Texture2D tex = new Texture2D(2,2);
         tex.LoadImage(imageData);
-        cardImage = Sprite.Create(tex,new Rect(40,40,width-40,height-40),Vector2.zero);
+        if (isMod) cardImage = Sprite.Create(tex,new Rect(0,0,width,height),Vector2.zero);
+        else cardImage = Sprite.Create(tex,new Rect(40,40,width-40,height-40),Vector2.zero);
         //Loading card and parsing it.
         var lines = File.ReadAllLines(filepath);
         //Breaks down each component of laoded file and populates values. Not all cards have all values.
@@ -393,10 +406,35 @@ public class Monster
     public string GetName(){
         return monName;
     }
-    public int[] getStats(){
-        int[] stats = new int[3];
-        
-        return stats;
+    public int[] Shields(){
+        int totalShields = shield;
+        //Currently, no mods add shields
+        return new int[]{currentShields,totalShields};
+    }
+    public int[] PowerShields(){
+        int totalShields = powershield;
+        //Currently, no mods add powershields
+        return new int[]{currentPowerShields,totalShields};
+    }
+    public int[] AbilityShields(){
+        int totalShields = defenseshield;
+        if (gemCount >= 3) totalShields += defgem3abilityshield;
+        return new int[]{currentAbilityShields,totalShields};
+    }
+    public int[] AbilityPowerShields(){
+        int totalShields = defensepowershield;
+        //Nothing adds to this value presently
+        return new int[]{currentAbilityShields,totalShields};
+    }
+    public int[] TrainedShields(){
+        int totalShields = defenseaddabilityshield;
+        return new int[]{trainedShields,totalShields};
+    }
+    public int[] Health(){
+        int maxHP = 10 * tier;
+        maxHP += maxhealth;
+        maxHP += maxhealthpertier * tier;
+        return new int[]{currentHP, maxHP};
     }
     public int[] getRewards(){
         int[] rewards = new int[4];
