@@ -193,6 +193,9 @@ public class Ability
     public Sprite Image(){
         return cardImage;
     }
+    public string GetCardType(){
+        return type;
+    }
     public int getShields(){
         if (critSuccess)
             return shield + critshield;

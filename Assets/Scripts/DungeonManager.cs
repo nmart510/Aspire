@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class DungeonManager : MonoBehaviour
 {
@@ -25,7 +26,10 @@ public class DungeonManager : MonoBehaviour
     public Button btnMMod1, btnMMod2, btnMMod3;
     public Button btnMModLeft;
     public Button btnMModRight;
-
+    //Damage confirmation elements
+    public GameObject pnlConfirmDamage;
+    public Button btnConfirmDamage;
+    public TextMeshProUGUI txtDamageInfo;
     //Trade elements
     public Button btnTradeWithP2, btnTradeWithP3, btnTradeWithP4;
 
@@ -173,6 +177,15 @@ public class DungeonManager : MonoBehaviour
     string equippingSlot;
     Equipment itemToEquip;
     Equipment activeTome = null;
+    //Storage for pending attacks
+    int pendingShieldBreak = 0;
+    int pendingDamage = 0;
+    bool pendingHoming = false;
+    bool pendingPierce = false;
+    bool pendingIgnore = false;
+    string pendingType = null;
+    string pendingTag = null;
+    
 
     // Start is called before the first frame update
     void Start()
@@ -270,6 +283,9 @@ public class DungeonManager : MonoBehaviour
                 EquipOptionOffset=0;equippingSlot = null;ReloadEquipped();});
         btnChooseMainHand.onClick.AddListener(delegate{pnlVersitile.SetActive(false); equippingSlot = "Main";EquipItem();});
         btnChooseTwoHand.onClick.AddListener(delegate{pnlVersitile.SetActive(false); equippingSlot = "Two";EquipItem();});
+        //Listenner for confirming damage
+        btnConfirmDamage.onClick.AddListener(delegate{localUser.Write("*CONFIRMDAMAGE");});
+        
         //Set starting player names
         txtP1Name.text = players[0].GetName();
         txtLobbyP1.text = players[0].GetName();
@@ -500,27 +516,64 @@ public class DungeonManager : MonoBehaviour
                 }
                 if (combatStep){
                     //If the user is recieving an attack
+                    //Attacks are in the order...
+                    //      ShieldBreak,Damage,IsHoming,IsPierce,ShieldIgnore,Type,tag
                     if (message[0].CompareTo("*ATTACK") == 0){
-                        int.TryParse(message[1], out int damage);
-                        bool attackIsHoming = false;
-                        bool attackIsPierce = false;
-                        bool attackIsCollateral = false;
-                        int shieldBreak = 0;
-                        int remaining = damage;
-                        if (attackIsHoming == false && attackIsCollateral == false){
-                            remaining -= EQevade; //Evade is removed from damage
-                            if (remaining < 0) remaining = 0;
-                        }
-                        remaining = DamageSheilds(shieldBreak, remaining); //Shields are removed from damage
-                        if (attackIsPierce == false && attackIsCollateral == false){
-                            remaining -= EQarmor; //Armor is removed from damage
-                            if (remaining < 0) remaining = 0;
-                        }
-                        localUser.takeDamage(remaining);
-                        txtLog.text = monster.GetName()+" attacks for "+ damage+"damage\n" + txtLog.text;
-                        localUser.Write("*RESULT,"+localUser.getHealth()[0]);
-                        if (localUser.getHealth()[0] <= 0)
-                            localUser.Write("*REMOVE");
+                        // The attack does not take immediate effect, instead it will store the values
+                        // and project a notice to the players. The players can still use abilities or 
+                        // potions UNTIL they confirm the notice. Before that, a *PENDING message will 
+                        // inform every player in said combat how much damage each player is expected to
+                        // take. If any damage is reduced, this will update accordingly.
+                        int.TryParse(message[1], out int shb);
+                        int.TryParse(message[2], out int dmg);
+                        bool.TryParse(message[3], out bool hmg);
+                        bool.TryParse(message[4], out bool prc);
+                        bool.TryParse(message[5], out bool ign);
+                        pendingShieldBreak += shb;
+                        pendingDamage += dmg;
+                        pendingHoming = pendingHoming || hmg;
+                        pendingPierce = pendingPierce || prc;
+                        pendingIgnore = pendingIgnore || ign;
+                        pendingType = message[6];
+                        if (message.Length > 7)
+                            pendingTag = message[7];
+                        //Calculate damage to Health
+                        int damage = CalculateDamage();
+                        localUser.Write("*DAMAGE,"+damage);
+                        pnlConfirmDamage.SetActive(true);
+                    if (message[0].CompareTo("*DAMAGEUPDATE") == 0){
+                        string damageInfo = monster.GetName() + " is attacking for the following damage amounts:\n";
+                        for (int i = 1; i < message.Length; i++) damageInfo += message[i] + "\n";
+                        damageInfo += "You can still use potions and abilities at this time.";
+                        txtDamageInfo.text = damageInfo;
+                    }
+                    if (message[0].CompareTo("*PREVENT") == 0){
+                        int.TryParse(message[1], out int prevented);
+                        pendingDamage -= prevented;
+                        localUser.Write("*DAMAGE,"+damage);
+                    }
+                    if (message[0].CompareTo("*ATTACKCONFIRMED") == 0){
+                        int finalDamage = attackResult();
+                        localUser.takeDamage(finalDamage);
+                        string finalResult = ("*RESULT,"+finalDamage);
+                        if (pendingTag.CompareTo("DRAIN")==0 && finalDamage > 0) finalResult+=",DRAIN";
+                        localUser.Write(finalResult);
+                        pendingShieldBreak = 0;
+                        pendingDamage = 0;
+                        pendingHoming = false;
+                        pendingPierce = false;
+                        pendingIgnore = false;
+                        pendingType = "";
+                        pendingTag = "";
+                        pnlConfirmDamage.SetActive(false);
+                    }
+                    if (message[0].CompareTo("*MILL") == 0){
+                        Ability temp = localUser.Deck().Draw();
+                        localUser.Write("*MILL,"+temp.GetCardType());
+                        localUser.Deck().Discard(temp);
+                        ReloadDiscard();
+                    }
+                    
                     }//Receives the results of an attack made by a player
                     if (message[0].CompareTo("*RESULT") == 0){
                         int.TryParse(message[1],out monHealth);
@@ -1210,17 +1263,16 @@ public class DungeonManager : MonoBehaviour
         localUser.changeAP(1);
         pnlFlee.SetActive(false);
     }
-    int DamageSheilds(int shldbrk, int dmg){
-        int sb = shldbrk;
-        int damage = dmg;
-        if (shldbrk > 0){
+    int attackResult(){
+        //Calculate shield break
+        if (pendingShieldBreak > 0){
             for (int d = 0; d < defenses.Count; d++){
                 if (defenses[d].getCurrentDefenses()[0] == 0){ //regular shields, shield break is applied.
-                    if (defenses[d].getCurrentDefenses()[1] >= sb){
-                        defenses[d].DamageSheilds(sb);
-                        sb = 0;
+                    if (defenses[d].getCurrentDefenses()[1] >= pendingShieldBreak){
+                        defenses[d].DamageSheilds(pendingShieldBreak);
+                        pendingShieldBreak = 0;
                     } else {
-                        sb -= defenses[d].getCurrentDefenses()[1];
+                        pendingShieldBreak -= defenses[d].getCurrentDefenses()[1];
                         defenses[d].DamageSheilds(defenses[d].getCurrentDefenses()[1]);
                     }
                 }
@@ -1228,56 +1280,81 @@ public class DungeonManager : MonoBehaviour
             foreach (Equipment e in localUser.GetEquipped()){
                 if (e != null){
                     if (e.getCurrentShieldValues()[0] > 0){
-                        if (e.getCurrentShieldValues()[0] > sb){
-                            e.damageShields(sb);
-                            sb = 0;
+                        if (e.getCurrentShieldValues()[0] > pendingShieldBreak){
+                            e.damageShields(pendingShieldBreak);
+                            pendingShieldBreak = 0;
                         }else{
-                            sb -= e.getCurrentShieldValues()[0];
+                            pendingShieldBreak -= e.getCurrentShieldValues()[0];
                             e.damageShields(e.getCurrentShieldValues()[0]);
                         }
                     }
                 }
             }
         }
-        for (int d = 0; d < defenses.Count; d++){
-            if (defenses[d].getCurrentDefenses()[1] >= damage){
-                defenses[d].DamageSheilds(damage);
-                damage = 0;
-            } else {
-                damage -= defenses[d].getCurrentDefenses()[1];
-                defenses[d].DamageSheilds(defenses[d].getCurrentDefenses()[1]);
-            }
-            
+        if (pendingTag.CompareTo("HANDCOUNTREDUCE")==0) pendingDamage -= inHand.Count;
+        int evade = 0;
+        int armor = 0;
+        foreach (Ability a in defenses){
+            evade += a.getEvade();
         }
-        ReloadDefenses();
-            foreach (Equipment e in localUser.GetEquipped()){// regular shields break from damage
-                if (e != null){
-                    if (e.getCurrentShieldValues()[0] > 0){
-                        if (e.getCurrentShieldValues()[0] > damage){
-                            e.damageShields(damage);
-                            damage = 0;
-                        }else{
-                            damage -= e.getCurrentShieldValues()[0];
-                            e.damageShields(e.getCurrentShieldValues()[0]);
+        foreach (Equipment e in localUser.GetEquipped()){
+            if (e != null){
+                armor += e.getArmor(playerClass,enemyTier);
+                evade += e.getEvade(playerClass,enemyTier);
+            }
+        } ReloadDefenses();
+        //Calculate evade
+        if (pendingHoming == false && pendingType.CompareTo("Collateral")!=0){
+            pendingDamage -= evade;
+        } if (pendingDamage <= 0) return 0;
+        if (pendingIgnore == false){
+            for (int d = 0; d < defenses.Count; d++){
+                if (defenses[d].getCurrentDefenses()[1] >= pendingDamage){
+                    defenses[d].DamageSheilds(pendingDamage);
+                    pendingDamage = 0;
+                } else {
+                    pendingDamage -= defenses[d].getCurrentDefenses()[1];
+                    defenses[d].DamageSheilds(defenses[d].getCurrentDefenses()[1]);
+                }
+                
+            }
+            ReloadDefenses();
+                foreach (Equipment e in localUser.GetEquipped()){// regular shields break from damage
+                    if (e != null){
+                        if (e.getCurrentShieldValues()[0] > 0){
+                            if (e.getCurrentShieldValues()[0] > pendingDamage){
+                                e.damageShields(pendingDamage);
+                                pendingDamage = 0;
+                            }else{
+                                pendingDamage -= e.getCurrentShieldValues()[0];
+                                e.damageShields(e.getCurrentShieldValues()[0]);
+                            }
                         }
                     }
                 }
-            }
-            foreach (Equipment e in localUser.GetEquipped()){//power shields break from damage
-                if (e != null){
-                    if (e.getCurrentShieldValues()[1] > 0){
-                        if (e.getCurrentShieldValues()[1] > damage){
-                            e.damagePowerShields(damage);
-                            damage = 0;
-                        }else{
-                            damage -= e.getCurrentShieldValues()[1];
-                            e.damagePowerShields(e.getCurrentShieldValues()[1]);
+                foreach (Equipment e in localUser.GetEquipped()){//power shields break from damage
+                    if (e != null){
+                        if (e.getCurrentShieldValues()[1] > 0){
+                            if (e.getCurrentShieldValues()[1] > pendingDamage){
+                                e.damagePowerShields(pendingDamage);
+                                pendingDamage = 0;
+                            }else{
+                                pendingDamage -= e.getCurrentShieldValues()[1];
+                                e.damagePowerShields(e.getCurrentShieldValues()[1]);
+                            }
                         }
                     }
                 }
-            }
+        }
         ReloadEquipped();
-        return damage;
+        if (pendingDamage <= 0) return 0;
+        //Armor
+        if (pendingPierce == false && pendingType.CompareTo("Collateral")!=0){
+            pendingDamage -= armor;
+        }
+        if (pendingDamage <= 0) return 0;
+
+        return pendingDamage;
     }
     void ReloadArsenalView(){
         viewArsenal = localUser.Arsenal();
@@ -1542,5 +1619,41 @@ public class DungeonManager : MonoBehaviour
             activeTome = viewArsenal[num];
             pnlTomeUse.SetActive(true);
         }
+    }
+    int CalculateDamage(){
+        int shld = 0;
+        int pshld = 0;
+        int evade = 0;
+        int armor = 0;
+        foreach (Ability a in defenses){
+            if (a.getCurrentDefenses()[0] == 0){
+                shld += a.getCurrentDefenses()[1];
+            } else pshld += a.getCurrentDefenses()[1];
+            evade += a.getEvade();
+        }
+        foreach (Equipment e in localUser.GetEquipped()){
+            if (e != null){
+                shld += e.getCurrentShieldValues()[0];
+                pshld += e.getCurrentShieldValues()[1];
+                armor += e.getArmor(playerClass,enemyTier);
+                evade += e.getEvade(playerClass,enemyTier);
+            }
+        }
+        int tempsb = pendingShieldBreak;
+        int tempdmg = pendingDamage;
+        if (pendingTag.CompareTo("HANDCOUNTREDUCE")==0) tempdmg -= inHand.Count;
+        shld -= tempsb; if (shld < 0) shld = 0;
+        if (pendingHoming == false && pendingType.CompareTo("Collateral")!=0){
+            tempdmg -= evade;
+        }
+        if (pendingIgnore == false){
+            tempdmg -= shld;
+            tempdmg -= pshld;
+        }
+        if (pendingPierce == false && pendingType.CompareTo("Collateral")!=0){
+            tempdmg -= armor;
+        }
+        if (tempdmg < 0) tempdmg = 0;
+        return tempdmg;
     }
 }
