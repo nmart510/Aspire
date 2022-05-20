@@ -13,7 +13,7 @@ public class Equipment
     int itemvalue = 0;
     string classrestricted = null;
     int heal = 0;
-    bool regenshare = false;
+    int regenshare = 0;
     bool daily = false;
     bool dailyused = false;
     int runboost = 0;
@@ -97,7 +97,7 @@ public class Equipment
                 heal = num;
             }
             if (value[0].CompareTo("regenshare")==0){
-                bool.TryParse(value[1], out bool val);
+                int.TryParse(value[1], out int val);
                 regenshare = val;
             }
             if (value[0].CompareTo("daily")==0){
@@ -593,12 +593,20 @@ public class Equipment
         currentShields = shield;
     }
     public void damageShields(int damage){
-        shield -= damage;
-        if (shield < 0) shield = 0;
+        currentShields -= damage;
+        if (currentShields < 0) currentShields = 0;
     }
     public void damagePowerShields(int damage){
-        powershield -= damage;
-        if (powershield < 0) powershield = 0;
+        currentPowerShields -= damage;
+        if (currentPowerShields < 0) currentPowerShields = 0;
+    }
+    public int Regen(int tier){
+        int totalRegen = regen;
+        if (tier >= 3) totalRegen += t3regen;
+        return totalRegen;
+    }
+    public int SharedRegen(){
+        return regenshare;
     }
     public Equipment Clone(){
         Equipment temp = new Equipment();

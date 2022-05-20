@@ -21,6 +21,7 @@ public class Player : MonoBehaviour
     int AP = 0;
     List<Equipment> arsenal = new List<Equipment>();
     Deck<Ability> deck = new Deck<Ability>();
+    List<Monster> trophies = new List<Monster>();
     Equipment equipArmor = null;
     Equipment equipMain = null;
     Equipment equipOff = null;
@@ -235,5 +236,14 @@ public class Player : MonoBehaviour
                 }
         }
         return temp;
+    }
+    public void AddTrophy(Monster m){
+        trophies.Add(m);
+    }
+    public List<Monster> Trophies(){
+        return trophies;
+    }
+    public void RemoveTrophy(Monster m){
+        trophies.Remove(m);
     }
 }

@@ -13,6 +13,7 @@ public class Monster
     int commontreasure = 0;
     int qualitytreasure = 0;
     int victorypoints = 0;
+    bool allrewarded = false;
     int clericgem = 0;
     int warriorgem = 0;
     int roguegem = 0;
@@ -143,7 +144,7 @@ public class Monster
         //Loading image
         isMod = _isMod;
         byte[] imageData = System.IO.File.ReadAllBytes(imagepath);
-        int width = 750;
+        int width = 975;
         int height = 1125;
         if (isMod){
             width = 180;
@@ -248,6 +249,8 @@ public class Monster
                 int.TryParse(value[1], out defensepowershield);
             if (value[0].CompareTo("defenseshieldrestore")==0) 
                 bool.TryParse(value[1], out defenseshieldrestore);
+            if (value[0].CompareTo("allrewarded")==0) 
+                bool.TryParse(value[1], out allrewarded);
             if (value[0].CompareTo("defenseheal")==0) 
                 int.TryParse(value[1], out defenseheal);
             if (value[0].CompareTo("defenseenergy")==0) 
@@ -406,6 +409,9 @@ public class Monster
     public string GetName(){
         return monName;
     }
+    public Sprite Image(){
+        return cardImage;
+    }
     public int[] Shields(){
         int totalShields = shield;
         //Currently, no mods add shields
@@ -438,7 +444,7 @@ public class Monster
     }
     public int[] getRewards(){
         int[] rewards = new int[4];
-        rewards[0] = gold; rewards[1] = commontreasure; rewards[2] = qualitytreasure; rewards[3] = victorypoints;
+        rewards[0] = gold; rewards[1] = commontreasure + qualitytreasure; rewards[2] = victorypoints; rewards[3] = 1 + treasurerolls;
         return rewards;
     }
     public bool IsMod(){
@@ -452,6 +458,20 @@ public class Monster
     }
     public List<Monster> getMods(){
         return mods;
+    }
+    public void setStats(int health, int shields, int powshields, int abishields, int abipowshields, int trainshields){
+        currentHP = health;
+        currentShields = shields;
+        currentPowerShields = powshields;
+        currentAbilityShields = abishields;
+        currentAbilityPowerShields = abipowshields;
+        trainedShields = trainshields;
+    }
+    public int Tier(){
+        return tier;
+    }
+    public bool getAllRewarded(){
+        return allrewarded;
     }
     public Monster Clone(){
         Monster mon = new Monster();
