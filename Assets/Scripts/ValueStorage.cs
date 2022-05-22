@@ -13,6 +13,8 @@ public class ValueStorage : MonoBehaviour
     List<Equipment> specialEquipment;
     List<Equipment> reserveEquipment;
     List<Monster> monsterList;
+    List<Aspiration> Aspirations;
+    List<Aspiration>[] currentAspirations = new List<Aspiration>[]{new List<Aspiration>(),new List<Aspiration>(),new List<Aspiration>(),new List<Aspiration>()};
     bool initialShop = true;
     // Start is called before the first frame update
     void Start()
@@ -71,4 +73,31 @@ public class ValueStorage : MonoBehaviour
     public List<Monster> getMonList(){
         return monsterList;
     }
+    public void SetAspirations(List<Aspiration> aspirations){
+        Aspirations = aspirations;
+    }
+    public List<Aspiration> GetAspirations(){
+        return Aspirations;
+    }
+    public void SetCurrentAspirations(List<Aspiration>[] aspirations){
+        currentAspirations = aspirations;
+    }
+    public List<Aspiration>[] GetCurrentAspirations(){
+        return currentAspirations;
+    }
+    public Aspiration PeekAspiration(int row, int depth){
+        return currentAspirations[row][depth];
+    }
+    public void PushAspiration(int row, Aspiration a){
+        currentAspirations[row].Insert(0,a);
+    }
+    public Aspiration PopAspiration(int row){
+        Aspiration temp = currentAspirations[row][0];
+        currentAspirations[row].RemoveAt(0);
+        return temp;
+    }
+    public int AspirationCount(int row){
+        return currentAspirations[row].Count;
+    }
+
 }

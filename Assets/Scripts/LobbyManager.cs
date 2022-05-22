@@ -146,12 +146,16 @@ public class LobbyManager : MonoBehaviour
                         List<Equipment> qualityEquipment = LoadEquipment('q');
                         Debug.Log("Loading Special Equipment");
                         List<Equipment> specialEquipment = LoadEquipment('s');
+                        Debug.Log("Loading Monsters");
                         List<Monster> monsterList = LoadMonsters();
+                        Debug.Log("Loading Aspirations");
+                        List<Aspiration> aspirationList = LoadAspirations();
                         ValueStorage vs = GameObject.Find("NetworkManager").GetComponent<ValueStorage>();
                         vs.RecordPlayers(players);
                         vs.SetShopAbilities(abilities);
                         vs.setEquipmentDecks(commonEquipment,qualityEquipment,specialEquipment);
                         vs.setMonList(monsterList);
+                        vs.SetAspirations(aspirationList);
                         SceneManager.LoadScene("Shop");
                     }
                 }
@@ -192,6 +196,19 @@ public class LobbyManager : MonoBehaviour
         for (int i = 0; i < lines.Length; i++){
             string cardName = lines[i];
             Ability a = new Ability();
+            a.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"));
+            temp.Add(a);
+        }
+        return temp;
+    }
+    List<Aspiration> LoadAspirations(){ //Loads the list of abilities. NOTE: client side doesn't need to track quantity
+        List<Aspiration> temp = new List<Aspiration>();
+        string filepath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName,@"AspireAssets\Aspirations\");
+        string shopAblList = Path.Combine(filepath,@"AspirationsList.txt");
+        var lines = File.ReadAllLines(shopAblList);
+        for (int i = 0; i < lines.Length; i++){
+            string cardName = lines[i].Split(':')[0];
+            Aspiration a = new Aspiration();
             a.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"));
             temp.Add(a);
         }

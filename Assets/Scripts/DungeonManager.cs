@@ -87,7 +87,20 @@ public class DungeonManager : MonoBehaviour
             txtDefenseShield5, txtDefenseShield6;
 
     //Aspirations Elements
-    public Button btnAspiration1, btnAspiration2, btnAspiration3, btnAspiration4;
+    //Aspirations
+    public Button btnAspiration1, btnAsp1ScrollUp, btnAsp1ScrollDown,
+                btnAspiration2, btnAsp2ScrollUp, btnAsp2ScrollDown,
+                btnAspiration3, btnAsp3ScrollUp, btnAsp3ScrollDown,
+                btnAspiration4, btnAsp4ScrollUp, btnAsp4ScrollDown,
+                btnAspirationClaim, btnAspirationScore, btnCancelClaimScore,
+                btnAspirationClaimSkip;
+    public GameObject pnlAspirationOptions;
+    public Text txtSelectedAspiration;
+    int[] aspirationOffset = new int[]{0,0,0,0};
+    string[] aspirationClaimed = new string[]{"","","",""};
+    bool claimTurn = false;
+    int aspirationChoice = -1;
+    bool[] conditionsMet = new bool[]{false,false,false,false};
 
     //Discard/Deck Zone Elements
     public Button btnDiscardTop, btnDeck;
@@ -201,7 +214,34 @@ public class DungeonManager : MonoBehaviour
     int[] rewardVP = new int[4];
     int[] rewardTrophy = new int[4];
     int[] rewardRoll = new int[4];
-    
+    //cards played conditions
+    int cardsPlayed = 0;
+    int spellsPlayed = 0;
+    int attacksPlayed = 0;
+    int defensesPlayed = 0;
+    int techniquesPlayed = 0;
+    int cardsPlayedHigh = 0;
+    int spellsPlayedHigh = 0;
+    int attacksPlayedHigh = 0;
+    int defensesPlayedHigh = 0;
+    int techniquesPlayedHigh = 0;
+    int typesPlayedHigh = 0;
+    List<string> typesPlayed = new List<string>();
+    int damageDealt = 0;
+    int extraDrawn = 0;
+    int damagePrevented = 0;
+    int damageDealtHigh = 0;
+    int extraDrawnHigh = 0;
+    int damagePreventedHigh = 0;
+    int remainingShields = 0;
+    int remainingPowerShields = 0;
+    int remainingEvade = 0;
+    bool noTurnForMonster = true;
+    string monsterType = null;
+    int monsterTier = 0;
+    bool localAttack = false;
+    bool aspirationsPending = false;
+    bool readyToShop = false;
 
     // Start is called before the first frame update
     void Start()
@@ -442,6 +482,84 @@ public class DungeonManager : MonoBehaviour
         tglP4C7.onValueChanged.AddListener(delegate{
             if (tglP4C7.isOn){if (localUser.IsLead())rewardChange(4,7,true);}
             else{if (localUser.IsLead())rewardChange(4,7,false);}});
+        //Aspirations
+        btnAsp1ScrollDown.onClick.AddListener(delegate{aspirationOffset[0]--;ReloadAspirations();});
+        btnAsp1ScrollUp.onClick.AddListener(delegate{aspirationOffset[0]++;ReloadAspirations();});
+        btnAsp2ScrollDown.onClick.AddListener(delegate{aspirationOffset[1]--;ReloadAspirations();});
+        btnAsp2ScrollUp.onClick.AddListener(delegate{aspirationOffset[1]++;ReloadAspirations();});
+        btnAsp3ScrollDown.onClick.AddListener(delegate{aspirationOffset[2]--;ReloadAspirations();});
+        btnAsp3ScrollUp.onClick.AddListener(delegate{aspirationOffset[2]++;ReloadAspirations();});
+        btnAsp4ScrollDown.onClick.AddListener(delegate{aspirationOffset[3]--;ReloadAspirations();});
+        btnAsp4ScrollUp.onClick.AddListener(delegate{aspirationOffset[3]++;ReloadAspirations();});
+        btnAspiration1.onClick.AddListener(delegate{if(claimTurn && conditionsMet[0]){
+            pnlAspirationOptions.SetActive(true);
+            if (storage.PeekAspiration(0,0).ScoreAmount() > 0) btnAspirationScore.gameObject.SetActive(true);
+            else btnAspirationScore.gameObject.SetActive(false);
+            if (aspirationClaimed[0].CompareTo("")==0) btnAspirationClaim.gameObject.SetActive(true);
+            else btnAspirationClaim.gameObject.SetActive(false);
+            txtSelectedAspiration.text = storage.PeekAspiration(0,0).GetName();
+            aspirationChoice = 0;
+        }});
+        btnAspiration2.onClick.AddListener(delegate{if(claimTurn && conditionsMet[1]){
+            pnlAspirationOptions.SetActive(true);
+            if (storage.PeekAspiration(1,0).ScoreAmount() > 0) btnAspirationScore.gameObject.SetActive(true);
+            else btnAspirationScore.gameObject.SetActive(false);
+            if (aspirationClaimed[1].CompareTo("")==0) btnAspirationClaim.gameObject.SetActive(true);
+            else btnAspirationClaim.gameObject.SetActive(false);
+            txtSelectedAspiration.text = storage.PeekAspiration(1,0).GetName();
+            aspirationChoice = 1;
+        }});
+        btnAspiration3.onClick.AddListener(delegate{if(claimTurn && conditionsMet[2]){
+            pnlAspirationOptions.SetActive(true);
+            if (storage.PeekAspiration(2,0).ScoreAmount() > 0) btnAspirationScore.gameObject.SetActive(true);
+            else btnAspirationScore.gameObject.SetActive(false);
+            if (aspirationClaimed[2].CompareTo("")==0) btnAspirationClaim.gameObject.SetActive(true);
+            else btnAspirationClaim.gameObject.SetActive(false);
+            txtSelectedAspiration.text = storage.PeekAspiration(2,0).GetName();
+            aspirationChoice = 2;
+        }});
+        btnAspiration4.onClick.AddListener(delegate{if(claimTurn && conditionsMet[3]){
+            pnlAspirationOptions.SetActive(true);
+            if (storage.PeekAspiration(3,0).ScoreAmount() > 0) btnAspirationScore.gameObject.SetActive(true);
+            else btnAspirationScore.gameObject.SetActive(false);
+            if (aspirationClaimed[3].CompareTo("")==0) btnAspirationClaim.gameObject.SetActive(true);
+            else btnAspirationClaim.gameObject.SetActive(false);
+            txtSelectedAspiration.text = storage.PeekAspiration(3,0).GetName();
+            aspirationChoice = 3;
+        }});
+        btnAspirationClaimSkip.onClick.AddListener(delegate{
+            //Close menus and pass selection to next player
+            btnAspirationClaimSkip.gameObject.SetActive(false);
+            pnlAspirationOptions.SetActive(false);
+            localUser.Write("*SKIP");
+            claimTurn = false;
+            aspirationChoice = -1;
+        });
+        btnAspirationClaim.onClick.AddListener(delegate{
+            //If tribute, open menu for option to trade in, otherwise messages server of what you picked
+            if (storage.PeekAspiration(aspirationChoice,0).IsTribute()){
+
+            } else {
+                btnAspirationClaimSkip.gameObject.SetActive(false);
+                pnlAspirationOptions.SetActive(false);
+                localUser.Write("*CLAIM,"+storage.PeekAspiration(aspirationChoice,0).GetName());
+                claimTurn = false;
+                aspirationChoice = -1;
+            }
+        });
+        btnAspirationScore.onClick.AddListener(delegate{
+            //Score, close menus, then pass selection
+            localUser.changeVP(storage.PeekAspiration(aspirationChoice,0).ScoreAmount());
+            btnAspirationClaimSkip.gameObject.SetActive(false);
+            pnlAspirationOptions.SetActive(false);
+            localUser.Write("*SKIP");
+            claimTurn = false;
+            aspirationChoice = -1;
+        });
+        btnCancelClaimScore.onClick.AddListener(delegate{
+            pnlAspirationOptions.SetActive(false);
+            aspirationChoice = -1;
+        });
         //Set starting player names
         txtP1Name.text = players[0].GetName();
         txtLobbyP1.text = players[0].GetName();
@@ -494,7 +612,10 @@ public class DungeonManager : MonoBehaviour
         //if in combat and out of cards in hand
         if (combatStep && combatants.Contains(localUser) && inHand.Count == 0){
             inHand = localUser.Deck().Draw(2);
+            extraDrawn += 2;
+            if (extraDrawn > extraDrawnHigh) extraDrawnHigh = extraDrawn;
             ReloadHand();
+            CheckClaimConditions();
         }
         //Sets color of names in lobby based on status
         if (combatants.Contains(players[0])){
@@ -537,6 +658,20 @@ public class DungeonManager : MonoBehaviour
                 if (message[0].CompareTo("*CHAT")==0){
                     result[r] = result[r].Remove(0,6);
                     txtLog.text = result[r] + "\n" + txtLog.text;
+                }
+                if (message[0].CompareTo("*REQUESTASPIRATION")==0){
+                    int.TryParse(message[1], out int i);
+                    foreach (Aspiration a in storage.GetAspirations()) {
+                        if (a.GetName().CompareTo(message[2])==0){
+                            storage.PushAspiration(i,a.Clone());
+                            break;
+                        }
+                    }
+                    aspirationsPending = false;
+                    for (int row = 0; row < 4; row++){
+                        if (storage.AspirationCount(row)==0)
+                            aspirationsPending = true;
+                    }
                 }
                 if (message[0].CompareTo("*ENDOFDAY") == 0){
                     foreach (Player p in players){
@@ -718,6 +853,7 @@ public class DungeonManager : MonoBehaviour
                             inHand = localUser.Deck().Draw(3);
                             ReloadDiscard();
                             ReloadHand();
+                            CheckClaimConditions();
                         }
                         if (localUser.IsTurn())
                             StartTurn();
@@ -759,6 +895,9 @@ public class DungeonManager : MonoBehaviour
                         damageInfo += "You can still use potions and abilities at this time.";
                         txtDamageInfo.text = damageInfo;
                     }
+                    if (message[0].CompareTo("*MONSTERACTION") == 0){
+                        noTurnForMonster = false;
+                    }
                     if (message[0].CompareTo("*PREVENT") == 0){
                         int.TryParse(message[1], out int prevented);
                         pendingDamage -= prevented;
@@ -767,6 +906,8 @@ public class DungeonManager : MonoBehaviour
                     if (message[0].CompareTo("*ATTACKCONFIRMED") == 0){
                         Debug.Log("Attack Confirmed");
                         int finalDamage = attackResult();
+                        damagePrevented += pendingDamage - finalDamage;
+                        if (damagePrevented > damagePreventedHigh) damagePreventedHigh = damagePrevented;
                         Debug.Log("Final Damage returned");
                         localUser.takeDamage(finalDamage);
                         Debug.Log("Damage deducted from health");
@@ -781,6 +922,7 @@ public class DungeonManager : MonoBehaviour
                         pendingType = "";
                         pendingTag = "";
                         pnlConfirmDamage.SetActive(false);
+                        CheckClaimConditions();
                     }
                     if (message[0].CompareTo("*MILL") == 0){
                         Ability temp = localUser.Deck().Draw();
@@ -797,7 +939,10 @@ public class DungeonManager : MonoBehaviour
                         int.TryParse(message[4],out int ash);
                         int.TryParse(message[5],out int aps);
                         int.TryParse(message[6],out int ts);
+                        if (localAttack) damageDealt += monster.Health()[0]-h;
+                        if (damageDealt > damageDealtHigh) damageDealtHigh = damageDealt;
                         monster.setStats(h,s,ps,ash,aps,ts);
+                        CheckClaimConditions();
                         ReloadMonster();
                     }//Receives a message of which player it is now the turn of
                     if (message[0].CompareTo("*NEXT") == 0){
@@ -851,12 +996,61 @@ public class DungeonManager : MonoBehaviour
                         }
                         ReloadRewards();
                     }
+                    if (message[0].CompareTo("*ASPIRATIONS") == 0){
+                        if (localUser.GetName().CompareTo(message[1])==0){
+                            claimTurn = true;
+                            btnAspirationClaimSkip.gameObject.SetActive(true);
+                        }
+                        pnlRewardsDistro.SetActive(false);
+                        CheckClaimConditions();
+                    }
+                    if (message[0].CompareTo("*NEXTCHOICE") == 0){
+                        if (localUser.GetName().CompareTo(message[1])==0){
+                            claimTurn = true;
+                            btnAspirationClaimSkip.gameObject.SetActive(true);
+                        }
+                        ReloadAspirations();
+                    }
+                    if (message[0].CompareTo("*CLAIM") == 0){
+                        for (int row = 0; row < 4; row++){
+                            if (storage.PeekAspiration(row,0).GetName().CompareTo(message[1])==0){
+                                if (aspirationClaimed[row].CompareTo("")!=0) continue;
+                                else {aspirationClaimed[row] = message[2]; break;}
+                            }
+                        }
+                        ReloadAspirations();
+                    }
+                    if (message[0].CompareTo("*ALLCLAIMED") == 0){
+                        for (int row = 0; row < 4; row++){
+                            if (aspirationClaimed[row].CompareTo(localUser.GetName())==0) {
+                                localUser.AddAspiration(storage.PopAspiration(row));
+                                continue;
+                            }
+                            if(aspirationClaimed[row].CompareTo("")!=0){
+                                storage.PopAspiration(row);
+                                continue;
+                            }
+                        }
+                        if (localUser.IsLead()){
+                            for (int row = 0; row < 4; row++){
+                                if (storage.AspirationCount(row)==0)
+                                    localUser.Write("*REQUESTASPIRATION,"+row);
+                            }
+                        }
+                            for (int row = 0; row < 4; row++){
+                                if (storage.AspirationCount(row)==0)
+                                    aspirationsPending = true;
+                            }
+                        ReloadAspirations();
+                    }
                 }
                 if (message[0].CompareTo("*SHOP") == 0){
-                    SceneManager.LoadScene("Shop");
+                    readyToShop = true;
                 }
             }
         }
+        if (readyToShop && aspirationsPending == false)
+            SceneManager.LoadScene("Shop");
     }
     //Global Functions
     void SendChat(string chat){
@@ -902,6 +1096,7 @@ public class DungeonManager : MonoBehaviour
         }
         localUser.Deck().Shuffle();
         ReloadRewards();
+        CheckClaimConditions();
     }
     void SwitchToLobby(){ //Sets up the Lobby UI
         pnlTrade.SetActive(true);
@@ -960,7 +1155,33 @@ public class DungeonManager : MonoBehaviour
             }
             sendRewardsDistro();
         }
+        conditionsMet = new bool[]{false,false,false,false};
+        cardsPlayed = 0;
+        spellsPlayed = 0;
+        attacksPlayed = 0;
+        defensesPlayed = 0;
+        techniquesPlayed = 0;
+        List<string> typesPlayed = new List<string>();
+        damageDealt = 0;
+        extraDrawn = 0;
+        damagePrevented = 0;
+        remainingShields = 0;
+        remainingPowerShields = 0;
+        remainingEvade = 0;
+        noTurnForMonster = true;
+        monsterType = monster.GetMonType();
+        monsterTier = monster.Tier();
+        cardsPlayedHigh = 0;
+        spellsPlayedHigh = 0;
+        attacksPlayedHigh = 0;
+        defensesPlayedHigh = 0;
+        techniquesPlayedHigh = 0;
+        typesPlayedHigh = 0;
+        damageDealtHigh = 0;
+        extraDrawnHigh = 0;
+        damagePreventedHigh = 0;
         ReloadMonster();
+        CheckClaimConditions();
     }
     void clearMonster(){
         //Destroy(monster.gameObject);
@@ -1060,6 +1281,7 @@ public class DungeonManager : MonoBehaviour
         ReloadDiscard();
         ReloadHand();
         ReloadPlay();
+        CheckClaimConditions();
     }
 
     //Combat Functions
@@ -1080,12 +1302,13 @@ public class DungeonManager : MonoBehaviour
             ReloadPlay();
             ReloadDiscard();
         }
+        CheckClaimConditions();
     }
     void AcceptRewards(){
         //handling to ensure loot is divided as planned
         string lootList = "*ACCEPT";
         for (int i = 0; i < players.Count; i++){
-            lootList += ","+players[i].GetName()+";"+rewardGold[i]+";"+rewardTrophy+";"+rewardRoll+";"+rewardVP;
+            lootList += ","+players[i].GetName()+";"+rewardGold[i]+";"+rewardTrophy[i]+";"+rewardRoll[i]+";"+rewardVP[i];
             for (int j = 0; j < RewardDrops.Count;j++){
                 if (rewardsAssignment[j].CompareTo(players[i].GetName())==0)
                     lootList += ";"+RewardDrops[j].getName();
@@ -1094,6 +1317,7 @@ public class DungeonManager : MonoBehaviour
         localUser.Write(lootList);
         while(combatants.Count > 0)
             combatants.RemoveAt(0);
+        CheckClaimConditions();
     }
     void rewardChange(int _player, int _reward, bool _assigned ){
         string temp = rewardsAssignment[_reward-1];
@@ -1122,6 +1346,15 @@ public class DungeonManager : MonoBehaviour
                 if (e.Regen(enemyTier) > 0) localUser.Write("*HEAL,"+localUser.GetName()+":"+e.Regen(enemyTier));
         }
         ReloadHand();
+        cardsPlayed = 0;
+        spellsPlayed = 0;
+        attacksPlayed = 0;
+        defensesPlayed = 0;
+        techniquesPlayed = 0;
+        List<string> typesPlayed = new List<string>();
+        damageDealt = 0;
+        extraDrawn = 0;
+        damagePrevented = 0;
     }
     void ReloadHand(){ //Displays the cards in hand, toggles button active status.
         if (inHand.Count > 0){
@@ -1416,7 +1649,29 @@ public class DungeonManager : MonoBehaviour
     }
     void PlayCard(int num){ //Plays a card based on attributes.
         if (localUser.IsTurn() && localUser.getAP() > 0){
+            cardsPlayed++;
+            if (cardsPlayed > cardsPlayedHigh) cardsPlayedHigh = cardsPlayed;
             Ability card = inHand[num + handOffset];
+            if (card.GetSPSK().CompareTo("Spell")==0){
+                spellsPlayed++;
+                if (spellsPlayed > spellsPlayedHigh) spellsPlayedHigh = spellsPlayed;
+            }
+            if (card.isAttack()) {
+                attacksPlayed++;
+                if (typesPlayed.Contains("Attack")==false)typesPlayed.Add("Attack");
+                if (attacksPlayed > attacksPlayedHigh) attacksPlayedHigh = attacksPlayed;
+            }
+            if (card.isDefense()) {
+                defensesPlayed++;
+                if (typesPlayed.Contains("Defense")==false)typesPlayed.Add("Defense");
+                if (defensesPlayed > defensesPlayedHigh) defensesPlayedHigh = defensesPlayed;
+            }
+            if (card.isTechnique()) {
+                techniquesPlayed++;
+                if (typesPlayed.Contains("Technique")==false)typesPlayed.Add("Technique");
+                if (techniquesPlayed > techniquesPlayedHigh) techniquesPlayedHigh = techniquesPlayed;
+            }
+            if (typesPlayed.Count > typesPlayedHigh) typesPlayedHigh = typesPlayed.Count;
             //First, checks if is Critical card and rolls if it is.
             int result = card.RollSuccess();
             if (result > 0) {
@@ -1432,8 +1687,11 @@ public class DungeonManager : MonoBehaviour
                 nextPierce = card.GetDamageType()[1];
             }
             if (card.RestoresShields()) RestoreEquipment();
-            for (int i = 0; i < card.getDraw(); i++)
+            for (int i = 0; i < card.getDraw(); i++){
                 inHand.Add(localUser.Deck().Draw());
+                extraDrawn ++;
+                if (extraDrawn > extraDrawnHigh) extraDrawnHigh = extraDrawn;
+            }
             localUser.changeAP(card.getEnergy());
             Heal(card.getHeal());
             spellboost += card.getSPBoost();
@@ -1454,6 +1712,7 @@ public class DungeonManager : MonoBehaviour
             ReloadDefenses();
             ReloadPlay();
             ReloadDiscard();
+            CheckClaimConditions();
             txtActionPoints.text = "AP: "+localUser.getAP();
         }
     }
@@ -1485,6 +1744,7 @@ public class DungeonManager : MonoBehaviour
             if (types[2]) attackType = "Collateral";
         }
         localUser.Write("*ATTACK,"+card.getName()+","+damages[0]+","+damages[1]+","+types[0]+","+types[1]+","+ignore+","+attackType);
+        localAttack = true;
     }
     void RunAway(){
         if (localUser.IsTurn() && localUser.getAP() > 0){
@@ -1606,6 +1866,7 @@ public class DungeonManager : MonoBehaviour
         ReloadDiscard();
         //Calculate evade
         if (pendingHoming == false && pendingType.CompareTo("collateral")!=0){
+            
             pendingDamage -= evade;
         } if (pendingDamage <= 0) return 0;
         if (pendingIgnore == false){
@@ -2011,6 +2272,7 @@ public class DungeonManager : MonoBehaviour
         itemToEquip = null;
         pnlEquipOptionView.SetActive(false);
         ReloadEquipped();
+        CheckClaimConditions();
     }
     void UseTome(int num){
         if (viewArsenal[num].getName().Contains("Tome")){
@@ -2208,5 +2470,178 @@ public class DungeonManager : MonoBehaviour
             pnlRewardTgl6.SetActive(false);
             pnlRewardTgl7.SetActive(false);
         }
+    }
+    void ReloadAspirations(){
+        if (storage.AspirationCount(0) > 0)
+        btnAspiration1.image.sprite = storage.PeekAspiration(0,aspirationOffset[0]).Image();
+        else btnAspiration1.image.sprite = empty;
+        if (storage.AspirationCount(1) > 0)
+        btnAspiration2.image.sprite = storage.PeekAspiration(1,aspirationOffset[1]).Image();
+        else btnAspiration2.image.sprite = empty;
+        if (storage.AspirationCount(2) > 0)
+        btnAspiration3.image.sprite = storage.PeekAspiration(2,aspirationOffset[2]).Image();
+        else btnAspiration3.image.sprite = empty;
+        if (storage.AspirationCount(3) > 0)
+        btnAspiration4.image.sprite = storage.PeekAspiration(3,aspirationOffset[3]).Image();
+        else btnAspiration4.image.sprite = empty;
+        if (storage.AspirationCount(0) > 1){
+            if (aspirationOffset[0] > 0) btnAsp1ScrollDown.gameObject.SetActive(true);
+            else btnAsp1ScrollDown.gameObject.SetActive(false);
+            if (aspirationOffset[0] < storage.AspirationCount(0)-1) btnAsp1ScrollUp.gameObject.SetActive(true);
+            else btnAsp1ScrollUp.gameObject.SetActive(false);
+        } else {
+            btnAsp1ScrollDown.gameObject.SetActive(false);
+            btnAsp1ScrollUp.gameObject.SetActive(false);
+        }
+        if (storage.AspirationCount(1) > 1){
+            if (aspirationOffset[1] > 0) btnAsp2ScrollDown.gameObject.SetActive(true);
+            else btnAsp2ScrollDown.gameObject.SetActive(false);
+            if (aspirationOffset[1] < storage.AspirationCount(1)-1) btnAsp2ScrollUp.gameObject.SetActive(true);
+            else btnAsp2ScrollUp.gameObject.SetActive(false);
+        } else {
+            btnAsp2ScrollDown.gameObject.SetActive(false);
+            btnAsp2ScrollUp.gameObject.SetActive(false);
+        }
+        if (storage.AspirationCount(2) > 1){
+            if (aspirationOffset[2] > 0) btnAsp3ScrollDown.gameObject.SetActive(true);
+            else btnAsp3ScrollDown.gameObject.SetActive(false);
+            if (aspirationOffset[2] < storage.AspirationCount(2)-1) btnAsp3ScrollUp.gameObject.SetActive(true);
+            else btnAsp3ScrollUp.gameObject.SetActive(false);
+        } else {
+            btnAsp3ScrollDown.gameObject.SetActive(false);
+            btnAsp3ScrollUp.gameObject.SetActive(false);
+        }
+        if (storage.AspirationCount(3) > 1){
+            if (aspirationOffset[3] > 0) btnAsp4ScrollDown.gameObject.SetActive(true);
+            else btnAsp4ScrollDown.gameObject.SetActive(false);
+            if (aspirationOffset[3] < storage.AspirationCount(3)-1) btnAsp4ScrollUp.gameObject.SetActive(true);
+            else btnAsp4ScrollUp.gameObject.SetActive(false);
+        } else {
+            btnAsp4ScrollDown.gameObject.SetActive(false);
+            btnAsp4ScrollUp.gameObject.SetActive(false);
+        }
+        if (aspirationClaimed[0].CompareTo(localUser.GetName())==0) btnAspiration1.image.color = Color.cyan;
+        else if (aspirationClaimed[0].CompareTo("")!=0) btnAspiration1.image.color = Color.magenta;
+        else if (conditionsMet[0]) btnAspiration1.image.color = Color.white;
+        else btnAspiration1.image.color = Color.gray;
+        if (aspirationClaimed[1].CompareTo(localUser.GetName())==0) btnAspiration2.image.color = Color.cyan;
+        else if (aspirationClaimed[1].CompareTo("")!=0) btnAspiration2.image.color = Color.magenta;
+        else if (conditionsMet[1]) btnAspiration2.image.color = Color.white;
+        else btnAspiration2.image.color = Color.gray;
+        if (aspirationClaimed[2].CompareTo(localUser.GetName())==0) btnAspiration3.image.color = Color.cyan;
+        else if (aspirationClaimed[2].CompareTo("")!=0) btnAspiration3.image.color = Color.magenta;
+        else if (conditionsMet[2]) btnAspiration3.image.color = Color.white;
+        else btnAspiration3.image.color = Color.gray;
+        if (aspirationClaimed[3].CompareTo(localUser.GetName())==0) btnAspiration4.image.color = Color.cyan;
+        else if (aspirationClaimed[3].CompareTo("")!=0) btnAspiration4.image.color = Color.magenta;
+        else if (conditionsMet[3]) btnAspiration4.image.color = Color.white;
+        else btnAspiration4.image.color = Color.gray;
+    }
+    void CheckClaimConditions(){
+        for (int i = 0; i < conditionsMet.Length; i++){
+            Aspiration a = storage.PeekAspiration(i,0);
+            if (a.IsTribute()) {conditionsMet[i] = true; continue;}//tributes;
+            if (a.HasRogueEquipped()){//Battle-Ready
+                foreach (Equipment e in localUser.GetEquipped()){
+                    if (e != null && e.IsRogue()) {conditionsMet[i] = true; break;}
+                } if (conditionsMet[i] == true) continue;
+            }
+            if (a.HasMageEquipped()){//Battle-Ready
+                foreach (Equipment e in localUser.GetEquipped()){
+                    if (e != null && e.IsMage()) {conditionsMet[i] = true; break;}
+                } if (conditionsMet[i] == true) continue;
+            }
+            if (a.HasWarriorEquipped()){//Battle-Ready
+                foreach (Equipment e in localUser.GetEquipped()){
+                    if (e != null && e.IsWarrior()) {conditionsMet[i] = true; break;}
+                } if (conditionsMet[i] == true) continue;
+            }
+            if (a.HasClericEquipped()){//Battle-Ready
+                foreach (Equipment e in localUser.GetEquipped()){
+                    if (e != null && e.IsCleric()) {conditionsMet[i] = true; break;}
+                } if (conditionsMet[i] == true) continue;
+            }//Test/Display
+            if (a.ExtraCardsToDraw() > 0 && extraDrawnHigh >= a.ExtraCardsToDraw()){
+                conditionsMet[i] = true; continue;
+            }//Test/Display
+            if (a.PreventDamage() > 0 && damagePreventedHigh >= a.PreventDamage()){
+                conditionsMet[i] = true; continue;
+            }//Test/Display
+            if (a.DealDamage() > 0 && damageDealtHigh >= a.DealDamage()){
+                conditionsMet[i] = true; continue;
+            }//Test/Display
+            if (a.PlayCards() > 0 && cardsPlayedHigh >= a.PlayCards()){
+                conditionsMet[i] = true; continue;
+            }//Eliminate bounties
+            if (a.DefeatMonster() != null && a.DefeatMonster().CompareTo(monsterType)==0){
+                conditionsMet[i] = true; continue;
+            }//Path of
+            if (a.PlayDefense() > 0 && defensesPlayedHigh >= a.PlayDefense()){
+                conditionsMet[i] = true; continue;
+            }//Path of
+            if (a.PlayAttack() > 0 && attacksPlayedHigh >= a.PlayAttack()){
+                conditionsMet[i] = true; continue;
+            }//Path of
+            if (a.PlayTechnique() > 0 && techniquesPlayedHigh >= a.PlayTechnique()){
+                conditionsMet[i] = true; continue;
+            }//Path of
+            if (a.PlayDifferent() > 0 && typesPlayedHigh >= a.PlayDifferent()){
+                conditionsMet[i] = true; continue;
+            }//Spell Slinger
+            if (a.PlaySpells() > 0 && a.HaveSpells() > 0 && spellsPlayedHigh >= a.PlaySpells()){
+                int spellCount = 0;
+                foreach (Ability s in localUser.Deck().InspectDeck()) {
+                    if (s.GetCardType().CompareTo("Spell") == 0 && s.GetSource().CompareTo("Shop")==0){
+                        spellCount++;
+                    }
+                }
+                if (spellCount >= a.HaveSpells()){
+                    conditionsMet[i] = true; continue;
+                }
+            }//Deadly Force
+            if (a.DefeatFastTier() > 0 && monsterTier >= a.DefeatFastTier() && noTurnForMonster){
+                conditionsMet[i] = true; continue;
+            }//Stalwart
+            if (a.HaveArmor() && a.HaveEvade() && a.HaveShields() && a.HavePowerShields()){
+                bool hasArmor = false;
+                bool hasEvade = remainingEvade > 0;
+                bool hasShields = remainingShields > 0;
+                bool hasPowerShields = remainingPowerShields > 0;
+                foreach (Equipment e in localUser.GetEquipped()){
+                    if (e != null){
+                        hasArmor = hasArmor || e.HasArmor();
+                        hasEvade = hasEvade || e.HasEvade();
+                        hasShields = hasShields || e.getCurrentShieldValues()[0] > 0;
+                        hasPowerShields = hasPowerShields || e.getCurrentShieldValues()[1] > 0;
+                    }
+                }
+                if (hasArmor && hasEvade && hasShields && hasPowerShields){
+                    conditionsMet[i] = true; continue;
+                }
+            }//Contingent
+            if (a.HaveRegen() && a.HavePierce() && a.HaveHoming() && a.HaveShieldBreak()){
+                bool hasRegen = false;
+                bool hasHoming = false;
+                bool hasPierce = false;
+                bool hasShieldBreak = false;
+                foreach (Equipment e in localUser.GetEquipped()){
+                    if (e != null){
+                        hasRegen = hasRegen || e.HasRegen();
+                        hasHoming = hasHoming || e.isHoming();
+                        hasPierce = hasPierce || e.isPierce();
+                        hasShieldBreak = hasShieldBreak || e.hasShieldBreak();
+                    }
+                }
+                if (hasRegen && hasHoming && hasPierce && hasShieldBreak){
+                    conditionsMet[i] = true; continue;
+                }
+            }
+        }
+        ReloadAspirations();
+    }
+    void ClaimAspiration(int index){ 
+        if (claimTurn){
+            //if()
+        } 
     }
 }

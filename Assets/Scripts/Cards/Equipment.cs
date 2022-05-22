@@ -608,6 +608,42 @@ public class Equipment
     public int SharedRegen(){
         return regenshare;
     }
+    public bool IsRogue(){
+        return rogue;
+    }
+    public bool IsMage(){
+        return mage;
+    }
+    public bool IsWarrior(){
+        return warrior;
+    }
+    public bool IsCleric(){
+        return cleric;
+    }
+    public bool HasArmor(){
+        if (armor > 0) return true;
+        if (marmor > 0) return true;
+        if (t4armor > 0) return true;
+        if (t5armor > 0) return true;
+        return false;
+    }
+    public bool HasEvade(){
+        if (evade > 0) return true;
+        if (revade > 0) return true;
+        if (t4evade > 0) return true;
+        if (t5evade > 0) return true;
+        return false;
+    }
+    public bool hasShieldBreak(){
+        if (shieldbreak > 0) return true;
+        if (cshieldbreak > 0) return true;
+        return false;
+    }
+    public bool HasRegen(){
+        if (regen > 0) return true;
+        if (t3regen > 0) return true;
+        return false;
+    }
     public Equipment Clone(){
         Equipment temp = new Equipment();
         temp.cardImage = cardImage;

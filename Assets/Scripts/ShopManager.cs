@@ -39,6 +39,11 @@ public class ShopManager : MonoBehaviour
     int ArsenalOffset = 0;
     //Trophy
     //Aspirations
+    public Button btnAspiration1, btnAsp1ScrollUp, btnAsp1ScrollDown,
+                btnAspiration2, btnAsp2ScrollUp, btnAsp2ScrollDown,
+                btnAspiration3, btnAsp3ScrollUp, btnAsp3ScrollDown,
+                btnAspiration4, btnAsp4ScrollUp, btnAsp4ScrollDown;
+    int[] aspirationOffset = new int[]{0,0,0,0};
     //SellWindow
     public GameObject pnlSeller, pnlAdder;
     public Button btnSellConfirm, btnSellCancel, btnAddToDeck;
@@ -149,7 +154,15 @@ public class ShopManager : MonoBehaviour
         btnArsenal4.onClick.AddListener(delegate{SellEquipment(viewArsenal[3+ArsenalOffset]);});
         btnArsenal5.onClick.AddListener(delegate{SellEquipment(viewArsenal[4+ArsenalOffset]);});
         btnArsenal6.onClick.AddListener(delegate{SellEquipment(viewArsenal[5+ArsenalOffset]);});
-
+        //Aspirations
+        btnAsp1ScrollDown.onClick.AddListener(delegate{aspirationOffset[0]--;ReloadAspirations();});
+        btnAsp1ScrollUp.onClick.AddListener(delegate{aspirationOffset[0]++;ReloadAspirations();});
+        btnAsp2ScrollDown.onClick.AddListener(delegate{aspirationOffset[1]--;ReloadAspirations();});
+        btnAsp2ScrollUp.onClick.AddListener(delegate{aspirationOffset[1]++;ReloadAspirations();});
+        btnAsp3ScrollDown.onClick.AddListener(delegate{aspirationOffset[2]--;ReloadAspirations();});
+        btnAsp3ScrollUp.onClick.AddListener(delegate{aspirationOffset[2]++;ReloadAspirations();});
+        btnAsp4ScrollDown.onClick.AddListener(delegate{aspirationOffset[3]--;ReloadAspirations();});
+        btnAsp4ScrollUp.onClick.AddListener(delegate{aspirationOffset[3]++;ReloadAspirations();});
         //Seller
         btnSellConfirm.onClick.AddListener(delegate{ 
             if (EquipmentBeingSold != null){
@@ -208,6 +221,16 @@ public class ShopManager : MonoBehaviour
                             }
                         }
                     }
+                }
+                if (message[0].CompareTo("*ASPIRATIONLIST") == 0){
+                    for (int i = 1; i < message.Length; i++){
+                        foreach (Aspiration a in vs.GetAspirations()){
+                            if (a.GetName().CompareTo(message[i])==0){
+                                vs.PushAspiration(i-1,a.Clone()); break;
+                            }
+                        }
+                    }
+                    ReloadAspirations();
                 }
                 if (message[0].CompareTo("*LIST") == 0){
                     if (vs.isInitialShop()){ //initial shop has 8 common equipment.
@@ -670,6 +693,47 @@ public class ShopManager : MonoBehaviour
         EquipmentBeingPurchased = null;
         AbilityBeingPurchased = null;
     }
-    
+    void ReloadAspirations(){
+        btnAspiration1.image.sprite = vs.PeekAspiration(0,aspirationOffset[0]).Image();
+        btnAspiration2.image.sprite = vs.PeekAspiration(1,aspirationOffset[1]).Image();
+        btnAspiration3.image.sprite = vs.PeekAspiration(2,aspirationOffset[2]).Image();
+        btnAspiration4.image.sprite = vs.PeekAspiration(3,aspirationOffset[3]).Image();
+        if (vs.AspirationCount(0) > 1){
+            if (aspirationOffset[0] > 0) btnAsp1ScrollDown.gameObject.SetActive(true);
+            else btnAsp1ScrollDown.gameObject.SetActive(false);
+            if (aspirationOffset[0] < vs.AspirationCount(0)-1) btnAsp1ScrollUp.gameObject.SetActive(true);
+            else btnAsp1ScrollUp.gameObject.SetActive(false);
+        } else {
+            btnAsp1ScrollDown.gameObject.SetActive(false);
+            btnAsp1ScrollUp.gameObject.SetActive(false);
+        }
+        if (vs.AspirationCount(1) > 1){
+            if (aspirationOffset[1] > 0) btnAsp2ScrollDown.gameObject.SetActive(true);
+            else btnAsp2ScrollDown.gameObject.SetActive(false);
+            if (aspirationOffset[1] < vs.AspirationCount(1)-1) btnAsp2ScrollUp.gameObject.SetActive(true);
+            else btnAsp2ScrollUp.gameObject.SetActive(false);
+        } else {
+            btnAsp2ScrollDown.gameObject.SetActive(false);
+            btnAsp2ScrollUp.gameObject.SetActive(false);
+        }
+        if (vs.AspirationCount(2) > 1){
+            if (aspirationOffset[2] > 0) btnAsp3ScrollDown.gameObject.SetActive(true);
+            else btnAsp3ScrollDown.gameObject.SetActive(false);
+            if (aspirationOffset[2] < vs.AspirationCount(2)-1) btnAsp3ScrollUp.gameObject.SetActive(true);
+            else btnAsp3ScrollUp.gameObject.SetActive(false);
+        } else {
+            btnAsp3ScrollDown.gameObject.SetActive(false);
+            btnAsp3ScrollUp.gameObject.SetActive(false);
+        }
+        if (vs.AspirationCount(3) > 1){
+            if (aspirationOffset[3] > 0) btnAsp4ScrollDown.gameObject.SetActive(true);
+            else btnAsp4ScrollDown.gameObject.SetActive(false);
+            if (aspirationOffset[3] < vs.AspirationCount(3)-1) btnAsp4ScrollUp.gameObject.SetActive(true);
+            else btnAsp4ScrollUp.gameObject.SetActive(false);
+        } else {
+            btnAsp4ScrollDown.gameObject.SetActive(false);
+            btnAsp4ScrollUp.gameObject.SetActive(false);
+        }
+    }
 
 }

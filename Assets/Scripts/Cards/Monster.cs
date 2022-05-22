@@ -406,6 +406,9 @@ public class Monster
                 int.TryParse(value[1], out ethereal);
         }
     }
+    public string GetMonType(){
+        return subtype;
+    }
     public string GetName(){
         return monName;
     }

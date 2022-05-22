@@ -193,6 +193,9 @@ public class Ability
     public Sprite Image(){
         return cardImage;
     }
+    public string GetSource(){
+        return source;
+    }
     public string GetCardType(){
         return type;
     }
@@ -217,6 +220,16 @@ public class Ability
     public bool isAttack(){
         for (int a = 0; a < attributes.Count; a++)
             if(attributes[a].CompareTo("Attack")==0) return true;
+        return false;
+    }
+    public bool isDefense(){
+        for (int a = 0; a < attributes.Count; a++)
+            if(attributes[a].CompareTo("Defense")==0) return true;
+        return false;
+    }
+    public bool isTechnique(){
+        for (int a = 0; a < attributes.Count; a++)
+            if(attributes[a].CompareTo("Technique")==0) return true;
         return false;
     }
     public int[] GetDamage(){
