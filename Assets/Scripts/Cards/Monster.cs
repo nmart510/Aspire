@@ -450,6 +450,13 @@ public class Monster
         rewards[0] = gold; rewards[1] = commontreasure + qualitytreasure; rewards[2] = victorypoints; rewards[3] = 1 + treasurerolls;
         return rewards;
     }
+    public int GetSellValue(){
+        int sellValue = gold;
+        foreach (Monster m in mods){
+            sellValue -= m.gold;
+        }
+        return sellValue;
+    }
     public bool IsMod(){
         return isMod;
     }

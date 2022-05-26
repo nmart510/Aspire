@@ -186,9 +186,15 @@ public class Aspiration{
     public int ScoreAmount(){
         return vporclaim;
     }
-    public bool IsTribute(){
-        if (tradeability > 0 || tradegold > 0 || tradeitem > 0 || tradetrophy > 0) return true;
-        else return false;
+    public string IsTribute(){
+        if (tradeability > 0) return "Ability";
+        else if (tradetrophy > 0) return "Trophy";
+        else if (tradeitem > 0) return "Item";
+        else if (tradegold > 0) return "Gold";
+        else return null;
+    }
+    public int GoldTribute(){
+        return tradegold;
     }
     public bool HasRogueEquipped(){
         return rogueequipped;

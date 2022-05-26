@@ -475,6 +475,9 @@ public class Equipment
         if (subtype == null) types[1] = "";
         return types;
     }
+    public string GetSource(){
+        return source;
+    }
     public Sprite Image(){
         return cardImage;
     }

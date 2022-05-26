@@ -256,4 +256,9 @@ public class Player : MonoBehaviour
     public void RemoveAspiration(Aspiration a){
         aspirations.Remove(a);
     }
+    public void RemoveItem(Equipment e){
+        string slot = getSlot(e);
+        if (slot != null) UnEquip(slot);
+        Arsenal().Remove(e);
+    }
 }
