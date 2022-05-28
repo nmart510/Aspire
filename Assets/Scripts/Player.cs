@@ -31,6 +31,7 @@ public class Player : MonoBehaviour
     Equipment aux1 = null;
     Equipment aux2 = null;
     Equipment aux3 = null;
+    PlayerClass pClass = null;
 
 
     public string GetName(){
@@ -38,6 +39,12 @@ public class Player : MonoBehaviour
     }
     public void SetName(string _name){
         username = _name;
+    }
+    public PlayerClass GetPlayerClass(){
+        return pClass;
+    } 
+    public void SetClass(PlayerClass pc){
+        pClass = pc;
     }
     void Awake(){
         DontDestroyOnLoad(transform.gameObject);

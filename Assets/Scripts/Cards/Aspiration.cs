@@ -6,10 +6,10 @@ using System.IO;
 public class Aspiration{
     Sprite cardImage = null;
     string name = null;
-    int magegem = 0;
-    int warriorgem = 0;
-    int clericgem = 0;
-    int roguregem = 0;
+    float magegem = 0;
+    float warriorgem = 0;
+    float clericgem = 0;
+    float roguegem = 0;
     int victorypoint = 0;
     int tradeability = 0;
     int tradeitem = 0;
@@ -59,13 +59,13 @@ public class Aspiration{
             if (value[0].CompareTo("name")==0)
                 name = value[1];
             if (value[0].CompareTo("magegem")==0)
-                int.TryParse(value[1], out magegem);
+                float.TryParse(value[1], out magegem);
             if (value[0].CompareTo("warriorgem")==0)
-                int.TryParse(value[1], out warriorgem);
+                float.TryParse(value[1], out warriorgem);
             if (value[0].CompareTo("clericgem")==0)
-                int.TryParse(value[1], out clericgem);
-            if (value[0].CompareTo("roguregem")==0)
-                int.TryParse(value[1], out roguregem);
+                float.TryParse(value[1], out clericgem);
+            if (value[0].CompareTo("roguegem")==0)
+                float.TryParse(value[1], out roguegem);
             if (value[0].CompareTo("victorypoint")==0)
                 int.TryParse(value[1], out victorypoint);
             if (value[0].CompareTo("tradeability")==0)
@@ -141,7 +141,7 @@ public class Aspiration{
         temp.magegem = magegem;
         temp.warriorgem = warriorgem;
         temp.clericgem = clericgem;
-        temp.roguregem = roguregem;
+        temp.roguegem = roguegem;
         temp.victorypoint = victorypoint;
         temp.tradeability = tradeability;
         temp.tradeitem = tradeitem;
@@ -271,6 +271,9 @@ public class Aspiration{
     }
     public bool HavePierce(){
         return haspierce;
+    }
+    public float[] GetGem(){
+        return new float[]{warriorgem,clericgem,roguegem,magegem};
     }
 
 }

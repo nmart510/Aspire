@@ -61,7 +61,7 @@ public class Equipment
     bool wskacpierceskillhoming = false;
     string wversitile = null;
     bool wtwohandbreakall = false;
-    bool rhalf = false, mhalf = false, whalf = false, chalf = false, rwhalf = false, cmhalf = false, mrhalf = false;
+    bool rhalf = false, mhalf = false, whalf = false, chalf = false, rwhalf = false, cmhalf = false, mrhalf = false, wchalf = false;
     int t1shield = 0, t2shield = 0, t3allboost = 0,  t3regen = 0, t4armor = 0, t4evade = 0, t5armor = 0, t5evade = 0;
     int currentShields = 0, currentPowerShields = 0;
     Ability tomeLink = null;
@@ -435,6 +435,10 @@ public class Equipment
                 bool.TryParse(value[1], out bool val);
                 mrhalf = val;
             }
+            if (value[0].CompareTo("wchalf")==0){
+                bool.TryParse(value[1], out bool val);
+                wchalf = val;
+            }
             if (value[0].CompareTo("t1shield")==0){
                 int.TryParse(value[1], out int num);
                 t1shield = num;
@@ -647,6 +651,47 @@ public class Equipment
         if (t3regen > 0) return true;
         return false;
     }
+    public bool[] DailyStatus(){
+        return new bool[]{dailyused,daily};
+    }
+    public void UseDaily(){
+        dailyused = true;
+    }
+    public void ResetDaily(){
+        dailyused = false;
+    }
+    public float[] GetGem(string target){
+        float warriorgem = 0;
+        float clericgem = 0;
+        float roguegem = 0;
+        float magegem = 0;
+        if (whalf) warriorgem = .5f;
+        if (chalf) clericgem = .5f;
+        if (rhalf) roguegem = .5f;
+        if (mhalf) magegem = .5f;
+        if (wchalf){
+            if (target.CompareTo("Warrior")==0) warriorgem = .5f;
+            else if (target.CompareTo("Cleric")==0) clericgem = .5f;
+            else {warriorgem = .25f; clericgem = .25f;}
+        }
+        if (rwhalf){
+            if (target.CompareTo("Warrior")==0) warriorgem = .5f;
+            else if (target.CompareTo("Rogue")==0) roguegem = .5f;
+            else {warriorgem = .25f; roguegem = .25f;}
+        }
+        if (cmhalf){
+            if (target.CompareTo("Mage")==0) magegem = .5f;
+            else if (target.CompareTo("Cleric")==0) clericgem = .5f;
+            else {magegem = .25f; clericgem = .25f;}
+        }
+        if (mrhalf){
+            if (target.CompareTo("Mage")==0) magegem = .5f;
+            else if (target.CompareTo("Rogue")==0) roguegem = .5f;
+            else {magegem = .25f; roguegem = .25f;}
+        }
+        return new float[]{warriorgem,clericgem,roguegem,magegem};
+    }
+
     public Equipment Clone(){
         Equipment temp = new Equipment();
         temp.cardImage = cardImage;
@@ -748,6 +793,7 @@ public class Equipment
         temp.rwhalf = rwhalf; 
         temp.cmhalf = cmhalf; 
         temp.mrhalf = mrhalf;
+        temp.wchalf = wchalf;
         temp.t1shield = t1shield; 
         temp.t2shield = t2shield; 
         temp.t3allboost = t3allboost;  

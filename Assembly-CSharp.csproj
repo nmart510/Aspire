@@ -43,6 +43,7 @@
      <Compile Include="Assets\Scripts\BossManager.cs" />
      <Compile Include="Assets\Scripts\ValueStorage.cs" />
      <Compile Include="Assets\Scripts\Cards\Monster.cs" />
+     <Compile Include="Assets\Scripts\Cards\PlayerClass.cs" />
      <Compile Include="Assets\Scripts\ShopManager.cs" />
      <Compile Include="Assets\Scripts\Cards\Equipment.cs" />
      <Compile Include="Assets\Scripts\Player.cs" />

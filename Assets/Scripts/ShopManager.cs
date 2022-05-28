@@ -108,16 +108,45 @@ public class ShopManager : MonoBehaviour
     public GameObject pnlPurchase;
     public Button btnPurchaseConfirm, btnPurchaseCancel, btnPurchaseReserve;
     public Image imgPurchasePreview;
+    //class elements
+    public Button btnWarriorClass, btnMageClass, btnClericClass, btnRogueClass;
+    public GameObject pnlClasses;
+    //Class Aquisition
+    public GameObject pnlClassAquisition;
+    public Button btnCAAspiration1, btnCAAspiration2, btnCAConfirm, btnCACancel,
+            btnCAItem1, btnCAItem2, btnCAItem3, btnCAItem4,
+            btnCATrophy1, btnCATrophy2, btnCATrophy3, btnCATrophy4;
+    public Text txtWarriorGemCount, txtClericGemCount, txtRogueGemCount, txtMageGemCount;
+    //Gem Offer panels
+    public GameObject pnlClassItem, pnlClassAspiration, pnlClassTrophy;
+    public Button btnClassItem1, btnClassItem2, btnClassItem3, btnClassItem4,
+            btnClassItemCancel, btnClassItemRemove, btnClassItemLeft, btnClassItemRight,
+            btnClassTrophy1, btnClassTrophy2, btnClassTrophy3,
+            btnClassTrophyCancel, btnClassTrophyRemove, btnClassTrophyLeft, btnClassTrophyRight,
+            btnClassAspiration1, btnClassAspiration2, btnClassAspiration3,
+            btnClassAspirationCancel, btnClassAspirationRemove, btnClassAspirationLeft, btnClassAspirationRight;
 
-    public List<Equipment> initShop = new List<Equipment>();
-    public List<Equipment> ShopEquipment = new List<Equipment>();
-    public List<Ability> ShopAbilities = new List<Ability>();
-    public List<Ability> viewDeck = new List<Ability>();
-    public List<Equipment> viewArsenal = new List<Equipment>();
-    public List<Monster> viewTrophy = new List<Monster>();
-    public List<Aspiration> viewAspirations = new List<Aspiration>();
-    public Equipment HealthPot;
-    public Equipment ExplodingPot;
+    //Other Variables
+
+    List<Equipment> initShop = new List<Equipment>();
+    List<Equipment> ShopEquipment = new List<Equipment>();
+    List<Ability> ShopAbilities = new List<Ability>();
+    List<Ability> viewDeck = new List<Ability>();
+    List<Equipment> viewArsenal = new List<Equipment>();
+    List<Monster> viewTrophy = new List<Monster>();
+    List<Aspiration> viewAspirations = new List<Aspiration>();
+    List<Equipment> viewClassItem = new List<Equipment>();
+    List<Monster> viewClassTrophy = new List<Monster>();
+    List<Aspiration> viewClassAspiration = new List<Aspiration>();
+    List<Equipment> selectedClassItem = new List<Equipment>();
+    List<Monster> selectedClassTrophy = new List<Monster>();
+    List<Aspiration> selectedClassAspiration = new List<Aspiration>();
+    string TargetClass = null;
+    int ClassAspirationOffset = 0;
+    int ClassItemOffset = 0;
+    int ClassTrophyOffset = 0;
+    Equipment HealthPot;
+    Equipment ExplodingPot;
     public Sprite empty;
     Equipment EquipmentBeingSold = null;
     Ability AbilityBeingSold = null;
@@ -129,6 +158,11 @@ public class ShopManager : MonoBehaviour
     List<Equipment> AllReserved = new List<Equipment>();
     List<Ability> AllReservedAbilities = new List<Ability>();
     int pendingSlot = 0;
+    PlayerClass warrior = null;
+    PlayerClass cleric = null;
+    PlayerClass rogue = null;
+    PlayerClass mage = null;
+
     
 
     // Start is called before the first frame update
@@ -152,8 +186,6 @@ public class ShopManager : MonoBehaviour
             pnlInitialShop.SetActive(false);
             pnlShop.SetActive(true);
         }
-
-        
         //Loads in listeners for all buttons
 
         //Initial shop
@@ -543,6 +575,145 @@ public class ShopManager : MonoBehaviour
         btnAsp3ScrollUp.onClick.AddListener(delegate{aspirationOffset[2]++;ReloadAspirations();});
         btnAsp4ScrollDown.onClick.AddListener(delegate{aspirationOffset[3]--;ReloadAspirations();});
         btnAsp4ScrollUp.onClick.AddListener(delegate{aspirationOffset[3]++;ReloadAspirations();});
+        //Claiming a class
+        btnWarriorClass.onClick.AddListener(delegate{TargetClass = "Warrior";pnlClassAquisition.SetActive(true);ReloadClassAquisition();});
+        btnClericClass.onClick.AddListener(delegate{TargetClass = "Cleric";pnlClassAquisition.SetActive(true);ReloadClassAquisition();});
+        btnRogueClass.onClick.AddListener(delegate{TargetClass = "Rogue";pnlClassAquisition.SetActive(true);ReloadClassAquisition();});
+        btnMageClass.onClick.AddListener(delegate{TargetClass = "Mage";pnlClassAquisition.SetActive(true);ReloadClassAquisition();});
+        btnCAAspiration1.onClick.AddListener(delegate{pendingSlot = 1;pnlClassAspiration.SetActive(true);ClassAspirationOffset = 0;ReloadClassAspirations();});
+        btnCAAspiration2.onClick.AddListener(delegate{pendingSlot = 2;pnlClassAspiration.SetActive(true);ClassAspirationOffset = 0;ReloadClassAspirations();});
+        btnCATrophy1.onClick.AddListener(delegate{pendingSlot = 1;pnlClassTrophy.SetActive(true);ClassTrophyOffset = 0;ReloadClassTrophies();});
+        btnCATrophy2.onClick.AddListener(delegate{pendingSlot = 2;pnlClassTrophy.SetActive(true);ClassTrophyOffset = 0;ReloadClassTrophies();});
+        btnCATrophy3.onClick.AddListener(delegate{pendingSlot = 3;pnlClassTrophy.SetActive(true);ClassTrophyOffset = 0;ReloadClassTrophies();});
+        btnCATrophy4.onClick.AddListener(delegate{pendingSlot = 4;pnlClassTrophy.SetActive(true);ClassTrophyOffset = 0;ReloadClassTrophies();});
+        btnCAItem1.onClick.AddListener(delegate{pendingSlot = 1;pnlClassItem.SetActive(true);ClassItemOffset = 0;ReloadClassItems();});
+        btnCAItem2.onClick.AddListener(delegate{pendingSlot = 2;pnlClassItem.SetActive(true);ClassItemOffset = 0;ReloadClassItems();});
+        btnCAItem3.onClick.AddListener(delegate{pendingSlot = 3;pnlClassItem.SetActive(true);ClassItemOffset = 0;ReloadClassItems();});
+        btnCAItem4.onClick.AddListener(delegate{pendingSlot = 4;pnlClassItem.SetActive(true);ClassItemOffset = 0;ReloadClassItems();});
+        btnCAConfirm.onClick.AddListener(delegate{TradeForClass();});
+        btnCACancel.onClick.AddListener(delegate{TargetClass = null; pnlClassAquisition.SetActive(false);
+            selectedClassAspiration = null; selectedClassItem = null; selectedClassTrophy = null;});
+        btnClassAspiration1.onClick.AddListener(delegate{
+            if (selectedClassAspiration.Count >= pendingSlot) selectedClassAspiration.RemoveAt(pendingSlot-1);
+            selectedClassAspiration.Add(viewClassAspiration[0+ClassAspirationOffset]);
+            pnlClassAspiration.SetActive(false);
+            ClassAspirationOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassAspiration2.onClick.AddListener(delegate{
+            if (selectedClassAspiration.Count >= pendingSlot) selectedClassAspiration.RemoveAt(pendingSlot-1);
+            selectedClassAspiration.Add(viewClassAspiration[1+ClassAspirationOffset]);
+            pnlClassAspiration.SetActive(false);
+            ClassAspirationOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassAspiration3.onClick.AddListener(delegate{
+            if (selectedClassAspiration.Count >= pendingSlot) selectedClassAspiration.RemoveAt(pendingSlot-1);
+            selectedClassAspiration.Add(viewClassAspiration[2+ClassAspirationOffset]);
+            pnlClassAspiration.SetActive(false);
+            ClassAspirationOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassAspirationLeft.onClick.AddListener(delegate{ClassAspirationOffset--;ReloadClassAspirations();});
+        btnClassAspirationRight.onClick.AddListener(delegate{ClassAspirationOffset++;ReloadClassAspirations();});
+        btnClassAspirationRemove.onClick.AddListener(delegate{
+            if (selectedClassAspiration.Count >= pendingSlot) selectedClassAspiration.RemoveAt(pendingSlot-1);
+            pnlClassAspiration.SetActive(false);
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassAspirationCancel.onClick.AddListener(delegate{
+            pnlClassAspiration.SetActive(false);
+            ClassAspirationOffset = 0;
+            pendingSlot = 0;
+        });
+        btnClassItem1.onClick.AddListener(delegate{
+            if (selectedClassItem.Count >= pendingSlot) selectedClassItem.RemoveAt(pendingSlot-1);
+            selectedClassItem.Add(viewClassItem[0+ClassItemOffset]);
+            pnlClassItem.SetActive(false);
+            ClassItemOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassItem2.onClick.AddListener(delegate{
+            if (selectedClassItem.Count >= pendingSlot) selectedClassItem.RemoveAt(pendingSlot-1);
+            selectedClassItem.Add(viewClassItem[1+ClassItemOffset]);
+            pnlClassItem.SetActive(false);
+            ClassItemOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassItem3.onClick.AddListener(delegate{
+            if (selectedClassItem.Count >= pendingSlot) selectedClassItem.RemoveAt(pendingSlot-1);
+            selectedClassItem.Add(viewClassItem[2+ClassItemOffset]);
+            pnlClassItem.SetActive(false);
+            ClassItemOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassItem4.onClick.AddListener(delegate{
+            if (selectedClassItem.Count >= pendingSlot) selectedClassItem.RemoveAt(pendingSlot-1);
+            selectedClassItem.Add(viewClassItem[3+ClassItemOffset]);
+            pnlClassItem.SetActive(false);
+            ClassItemOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassItemLeft.onClick.AddListener(delegate{ClassItemOffset--;ReloadClassItems();});
+        btnClassItemRight.onClick.AddListener(delegate{ClassItemOffset++;ReloadClassItems();});
+        btnClassItemRemove.onClick.AddListener(delegate{
+            if (selectedClassItem.Count >= pendingSlot) selectedClassItem.RemoveAt(pendingSlot-1);
+            pnlClassItem.SetActive(false);
+            ClassItemOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassItemCancel.onClick.AddListener(delegate{
+            pnlClassItem.SetActive(false);
+            ClassItemOffset = 0;
+            pendingSlot = 0;
+        });
+        btnClassTrophy1.onClick.AddListener(delegate{
+            if (selectedClassTrophy.Count >= pendingSlot) selectedClassTrophy.RemoveAt(pendingSlot-1);
+            selectedClassTrophy.Add(viewClassTrophy[0+ClassTrophyOffset]);
+            pnlClassTrophy.SetActive(false);
+            ClassTrophyOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassTrophy2.onClick.AddListener(delegate{
+            if (selectedClassTrophy.Count >= pendingSlot) selectedClassTrophy.RemoveAt(pendingSlot-1);
+            selectedClassTrophy.Add(viewClassTrophy[0+ClassTrophyOffset]);
+            pnlClassTrophy.SetActive(false);
+            ClassTrophyOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassTrophy3.onClick.AddListener(delegate{
+            if (selectedClassTrophy.Count >= pendingSlot) selectedClassTrophy.RemoveAt(pendingSlot-1);
+            selectedClassTrophy.Add(viewClassTrophy[0+ClassTrophyOffset]);
+            pnlClassTrophy.SetActive(false);
+            ClassTrophyOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassTrophyLeft.onClick.AddListener(delegate{ClassTrophyOffset--;ReloadClassTrophies();});
+        btnClassTrophyRight.onClick.AddListener(delegate{ClassTrophyOffset++;ReloadClassTrophies();});
+        btnClassTrophyRemove.onClick.AddListener(delegate{
+            if (selectedClassTrophy.Count >= pendingSlot) selectedClassTrophy.RemoveAt(pendingSlot-1);
+            pnlClassTrophy.SetActive(false);
+            ClassTrophyOffset = 0;
+            pendingSlot = 0;
+            ReloadClassAquisition();
+        });
+        btnClassTrophyCancel.onClick.AddListener(delegate{
+            pnlClassTrophy.SetActive(false);
+            ClassTrophyOffset = 0;
+            pendingSlot = 0;
+        });
         //Seller
         btnSellConfirm.onClick.AddListener(delegate{ 
             if (EquipmentBeingSold != null){
@@ -615,6 +786,23 @@ public class ShopManager : MonoBehaviour
                         }
                     }
                     ReloadAspirations();
+                }
+                if (message[0].CompareTo("*CLAIMCLASS") == 0){
+                    if (TargetClass != null && message[1].CompareTo(TargetClass)==0){
+                        pnlClassAquisition.SetActive(false);
+                        pnlClassAspiration.SetActive(false);
+                        pnlClassItem.SetActive(false);
+                        pnlClassTrophy.SetActive(false);
+                        selectedClassAspiration = null;
+                        selectedClassItem = null;
+                        selectedClassTrophy = null;
+                    }
+                    foreach (PlayerClass pc in vs.getAvailableClasses()){
+                        if (pc.getName().CompareTo(message[1])==0){
+                            vs.getAvailableClasses().Remove(pc);
+                        }
+                    }
+                    ReloadClasses();
                 }
                 if (message[0].CompareTo("*TRADEREQUEST") == 0){
                     if (tradePartner != null){
@@ -1586,5 +1774,323 @@ public class ShopManager : MonoBehaviour
             }
         }
         ResetTrade();
+    }
+    void ReloadClasses(){
+        List<PlayerClass> temp = vs.getAvailableClasses();
+        if (temp.Count == 0  || localUser.GetPlayerClass() != null) pnlClasses.SetActive(false);
+        else {
+            warrior = null;
+            cleric = null;
+            rogue = null;
+            mage = null;
+            foreach (PlayerClass pc in vs.getAvailableClasses()){
+                if (pc.getName().CompareTo("Warrior")==0) warrior = pc;
+                if (pc.getName().CompareTo("Cleric")==0) cleric = pc;
+                if (pc.getName().CompareTo("Rogue")==0) rogue = pc;
+                if (pc.getName().CompareTo("mage")==0) mage = pc;
+            }
+            if (warrior != null) {
+                btnWarriorClass.gameObject.SetActive(true);
+                btnWarriorClass.image.sprite = warrior.Image();
+            } else {
+                btnWarriorClass.gameObject.SetActive(false);
+                btnWarriorClass.image.sprite = empty;
+            }
+            if (cleric != null) {
+                btnClericClass.gameObject.SetActive(true);
+                btnClericClass.image.sprite = cleric.Image();
+            } else {
+                btnClericClass.gameObject.SetActive(false);
+                btnClericClass.image.sprite = empty;
+            }
+            if (rogue != null) {
+                btnRogueClass.gameObject.SetActive(true);
+                btnRogueClass.image.sprite = rogue.Image();
+            } else {
+                btnRogueClass.gameObject.SetActive(false);
+                btnRogueClass.image.sprite = empty;
+            }
+            if (mage != null) {
+                btnMageClass.gameObject.SetActive(true);
+                btnMageClass.image.sprite = mage.Image();
+            } else {
+                btnMageClass.gameObject.SetActive(false);
+                btnMageClass.image.sprite = empty;
+            }
+        }
+    }
+    void ReloadClassAspirations(){
+        viewClassAspiration = new List<Aspiration>();
+        foreach (Aspiration a in localUser.Aspirations()){
+            float sum = 0;
+            foreach (float f in a.GetGem())
+                sum+=f;
+            if (sum > 0)
+                viewClassAspiration.Add(a);
+        }
+        if (viewClassAspiration.Count > 0){
+            btnClassAspiration1.gameObject.SetActive(true);
+            btnClassAspiration1.image.sprite =  viewClassAspiration[0+ClassAspirationOffset].Image();
+        } else {
+            btnClassAspiration1.gameObject.SetActive(false);
+            btnClassAspiration1.image.sprite = empty;
+        }
+        if ( viewClassAspiration.Count > 1){
+            btnClassAspiration2.gameObject.SetActive(true);
+            btnClassAspiration2.image.sprite =  viewClassAspiration[1+ClassAspirationOffset].Image();
+        } else {
+            btnClassAspiration2.gameObject.SetActive(false);
+            btnClassAspiration2.image.sprite = empty;
+        }
+        if ( viewClassAspiration.Count > 2){
+            btnClassAspiration3.gameObject.SetActive(true);
+            btnClassAspiration3.image.sprite =  viewClassAspiration[2+ClassAspirationOffset].Image();
+        } else {
+            btnClassAspiration3.gameObject.SetActive(false);
+            btnClassAspiration3.image.sprite = empty;
+        }
+        if ( viewClassAspiration.Count > 3){
+            if (ClassAspirationOffset > 0) btnClassAspirationLeft.gameObject.SetActive(true);
+            else btnClassAspirationLeft.gameObject.SetActive(false);
+            if (ClassAspirationOffset < viewClassAspiration.Count-3) btnClassAspirationRight.gameObject.SetActive(true);
+            else btnClassAspirationRight.gameObject.SetActive(false);
+        } else {
+            btnClassAspirationLeft.gameObject.SetActive(false);
+            btnClassAspirationRight.gameObject.SetActive(false);
+        }
+    }
+    void ReloadClassTrophies(){
+        viewClassTrophy = new List<Monster>();
+        foreach (Monster a in localUser.Trophies()){
+            float sum = 0;
+            foreach (float f in a.GetGem())
+                sum+=f;
+            if (sum > 0)
+                viewClassTrophy.Add(a);
+        }
+        if (viewClassTrophy.Count > 0){
+            btnClassTrophy1.gameObject.SetActive(true);
+            btnClassTrophy1.image.sprite =  viewClassTrophy[0+ClassTrophyOffset].Image();
+        } else {
+            btnClassTrophy1.gameObject.SetActive(false);
+            btnClassTrophy1.image.sprite = empty;
+        }
+        if ( viewClassTrophy.Count > 1){
+            btnClassTrophy2.gameObject.SetActive(true);
+            btnClassTrophy2.image.sprite =  viewClassTrophy[1+ClassTrophyOffset].Image();
+        } else {
+            btnClassTrophy2.gameObject.SetActive(false);
+            btnClassTrophy2.image.sprite = empty;
+        }
+        if ( viewClassTrophy.Count > 2){
+            btnClassTrophy3.gameObject.SetActive(true);
+            btnClassTrophy3.image.sprite =  viewClassTrophy[2+ClassTrophyOffset].Image();
+        } else {
+            btnClassTrophy3.gameObject.SetActive(false);
+            btnClassTrophy3.image.sprite = empty;
+        }
+        if ( viewClassTrophy.Count > 3){
+            if (ClassTrophyOffset > 0) btnClassTrophyLeft.gameObject.SetActive(true);
+            else btnClassTrophyLeft.gameObject.SetActive(false);
+            if (ClassTrophyOffset <  viewClassTrophy.Count-3) btnClassTrophyRight.gameObject.SetActive(true);
+            else btnClassTrophyRight.gameObject.SetActive(false);
+        } else {
+            btnClassTrophyLeft.gameObject.SetActive(false);
+            btnClassTrophyRight.gameObject.SetActive(false);
+        }
+    }
+    void ReloadClassItems(){
+        viewClassItem = new List<Equipment>();
+        foreach (Equipment a in localUser.Arsenal()){
+            float sum = 0;
+            foreach (float f in a.GetGem(""))
+                sum+=f;
+            if (sum > 0)
+                viewClassItem.Add(a);
+        }
+        foreach (Equipment e in localUser.Arsenal()) {
+            if (e.GetSource().CompareTo("Basic")!=0) viewClassItem.Add(e);
+        }
+        if (viewClassItem.Count > 0){
+            btnClassItem1.gameObject.SetActive(true);
+            btnClassItem1.image.sprite =  viewClassItem[0+ClassItemOffset].Image();
+        } else {
+            btnClassItem1.gameObject.SetActive(false);
+            btnClassItem1.image.sprite = empty;
+        }
+        if ( viewClassItem.Count > 1){
+            btnClassItem2.gameObject.SetActive(true);
+            btnClassItem2.image.sprite =  viewClassItem[1+ClassItemOffset].Image();
+        } else {
+            btnClassItem2.gameObject.SetActive(false);
+            btnClassItem2.image.sprite = empty;
+        }
+        if ( viewClassItem.Count > 2){
+            btnClassItem3.gameObject.SetActive(true);
+            btnClassItem3.image.sprite =  viewClassItem[2+ClassItemOffset].Image();
+        } else {
+            btnClassItem3.gameObject.SetActive(false);
+            btnClassItem3.image.sprite = empty;
+        }
+        if ( viewClassItem.Count > 3){
+            btnClassItem4.gameObject.SetActive(true);
+            btnClassItem4.image.sprite =  viewClassItem[3+ClassItemOffset].Image();
+        } else {
+            btnClassItem4.gameObject.SetActive(false);
+            btnClassItem4.image.sprite = empty;
+        }
+        if ( viewClassItem.Count > 4){
+            if (ClassItemOffset > 0) btnClassItemLeft.gameObject.SetActive(true);
+            else btnClassItemLeft.gameObject.SetActive(false);
+            if (ClassItemOffset <  viewClassItem.Count-4) btnClassItemRight.gameObject.SetActive(true);
+            else btnClassItemRight.gameObject.SetActive(false);
+        } else {
+            btnClassItemLeft.gameObject.SetActive(false);
+            btnClassItemRight.gameObject.SetActive(false);
+        }
+    }
+    void ReloadClassAquisition(){ 
+        if (selectedClassAspiration == null) selectedClassAspiration = new List<Aspiration>();
+        if (selectedClassItem == null) selectedClassItem = new List<Equipment>();
+        if (selectedClassTrophy == null) selectedClassTrophy = new List<Monster>();
+        txtWarriorGemCount.color = Color.black;
+        txtClericGemCount.color = Color.black;
+        txtRogueGemCount.color = Color.black;
+        txtMageGemCount.color = Color.black;
+        float warriorgem = 0;
+        float clericgem = 0;
+        float roguegem = 0;
+        float magegem = 0;
+        if (selectedClassAspiration.Count > 0){
+            float[] temp = selectedClassAspiration[0].GetGem();
+            warriorgem += temp[0];
+            clericgem += temp[1];
+            roguegem += temp[2];
+            magegem += temp[3];
+            btnCAAspiration1.image.sprite = selectedClassAspiration[0].Image();
+        } else btnCAAspiration1.image.sprite = empty;
+        if (selectedClassAspiration.Count > 1){
+            float[] temp = selectedClassAspiration[1].GetGem();
+            warriorgem += temp[0];
+            clericgem += temp[1];
+            roguegem += temp[2];
+            magegem += temp[3];
+            btnCAAspiration2.image.sprite = selectedClassAspiration[1].Image();
+        } else btnCAAspiration2.image.sprite = empty;
+        if (selectedClassTrophy.Count > 0){
+            float[] temp = selectedClassTrophy[0].GetGem();
+            warriorgem += temp[0];
+            clericgem += temp[1];
+            roguegem += temp[2];
+            magegem += temp[3];
+            btnCATrophy1.image.sprite = selectedClassTrophy[0].Image();
+        } else btnCATrophy1.image.sprite = empty;
+        if (selectedClassTrophy.Count > 1){
+            float[] temp = selectedClassTrophy[1].GetGem();
+            warriorgem += temp[0];
+            clericgem += temp[1];
+            roguegem += temp[2];
+            magegem += temp[3];
+            btnCATrophy2.image.sprite = selectedClassTrophy[1].Image();
+        } else btnCATrophy2.image.sprite = empty;
+        if (selectedClassTrophy.Count > 2){
+            float[] temp = selectedClassTrophy[2].GetGem();
+            warriorgem += temp[0];
+            clericgem += temp[1];
+            roguegem += temp[2];
+            magegem += temp[3];
+            btnCATrophy3.image.sprite = selectedClassTrophy[2].Image();
+        } else btnCATrophy3.image.sprite = empty;
+        if (selectedClassTrophy.Count > 3){
+            float[] temp = selectedClassTrophy[3].GetGem();
+            warriorgem += temp[0];
+            clericgem += temp[1];
+            roguegem += temp[2];
+            magegem += temp[3];
+            btnCATrophy4.image.sprite = selectedClassTrophy[3].Image();
+        } else btnCATrophy4.image.sprite = empty;
+        if (selectedClassItem.Count > 0){
+            float[] temp = selectedClassItem[0].GetGem(TargetClass);
+            warriorgem += temp[0];
+            clericgem += temp[1];
+            roguegem += temp[2];
+            magegem += temp[3];
+            btnCAItem1.image.sprite = selectedClassItem[0].Image();
+        } else btnCAItem1.image.sprite = empty;
+        if (selectedClassItem.Count > 1){
+            float[] temp = selectedClassItem[1].GetGem(TargetClass);
+            warriorgem += temp[0];
+            clericgem += temp[1];
+            roguegem += temp[2];
+            magegem += temp[3];
+            btnCAItem2.image.sprite = selectedClassItem[1].Image();
+        } else btnCAItem2.image.sprite = empty;
+        if (selectedClassItem.Count > 2){
+            float[] temp = selectedClassItem[2].GetGem(TargetClass);
+            warriorgem += temp[0];
+            clericgem += temp[1];
+            roguegem += temp[2];
+            magegem += temp[3];
+            btnCAItem3.image.sprite = selectedClassItem[2].Image();
+        } else btnCAItem3.image.sprite = empty;
+        if (selectedClassItem.Count > 3){
+            float[] temp = selectedClassItem[3].GetGem(TargetClass);
+            warriorgem += temp[0];
+            clericgem += temp[1];
+            roguegem += temp[2];
+            magegem += temp[3];
+            btnCAItem4.image.sprite = selectedClassItem[3].Image();
+        } else btnCAItem4.image.sprite = empty;
+        txtWarriorGemCount.text = ""+warriorgem;
+        txtClericGemCount.text = ""+clericgem;
+        txtRogueGemCount.text = ""+roguegem;
+        txtMageGemCount.text = ""+magegem;
+        bool classspecificfulfilled = false;
+        if (TargetClass.CompareTo("Warrior")==0){
+            if (warriorgem >= 1) classspecificfulfilled = true;
+            txtWarriorGemCount.color = classspecificfulfilled?Color.blue:Color.red;
+        }
+        if (TargetClass.CompareTo("Cleric")==0){
+            if (clericgem >= 1) classspecificfulfilled = true;
+            txtClericGemCount.color = classspecificfulfilled?Color.blue:Color.red;
+        }
+        if (TargetClass.CompareTo("Rogue")==0){
+            if (roguegem >= 1) classspecificfulfilled = true;
+            txtRogueGemCount.color = classspecificfulfilled?Color.blue:Color.red;
+        }
+        if (TargetClass.CompareTo("Mage")==0){
+            if (magegem >= 1) classspecificfulfilled = true;
+            txtMageGemCount.color = classspecificfulfilled?Color.blue:Color.red;
+        }
+        if (warriorgem + clericgem + roguegem + magegem == 2 && classspecificfulfilled)
+            btnCAConfirm.gameObject.SetActive(true);
+        else btnCAConfirm.gameObject.SetActive(false);
+    }
+    void TradeForClass(){
+        foreach (Aspiration a in selectedClassAspiration){
+            localUser.RemoveAspiration(a);
+        } selectedClassAspiration = null;
+        foreach (Monster t in selectedClassTrophy){
+            localUser.RemoveTrophy(t);
+        } selectedClassTrophy = null;
+        foreach (Equipment i in selectedClassItem){
+            localUser.RemoveItem(i);
+        } selectedClassItem = null;
+        pnlClassAquisition.SetActive(false);
+        foreach (PlayerClass pc in vs.getAvailableClasses()){
+            if (pc.getName().CompareTo(TargetClass)==0)
+                localUser.SetClass(pc);
+        }//Swap out Strikes for the class version
+        for( int c = localUser.Deck().DeckCount()-1; c >= 0; c++){
+            Ability temp = localUser.Deck().InspectDeck()[c];
+            if (temp.getName().CompareTo("Strike")==0) localUser.Deck().Remove(temp);
+        }
+        foreach(Ability a in vs.GetShopAbilities()){
+            if (a.getName().CompareTo(localUser.GetPlayerClass().getStrikeReplacement())==0){
+                localUser.Deck().Add(a); localUser.Deck().Add(a); localUser.Deck().Add(a); 
+            }
+        }
+        localUser.Write("*CLAIMCLASS,"+TargetClass); //Server will rebroadcast this, then each client will remove it appropriately.
+        ReloadClasses();
     }
 }

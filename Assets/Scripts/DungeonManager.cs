@@ -334,6 +334,11 @@ public class DungeonManager : MonoBehaviour
         players = vs.GetPlayers();
         localUser = vs.getLocalPlayer();
         combatants = new List<Player>();
+        playerClass = localUser.GetPlayerClass().getName();
+        if (playerClass != null){
+            pnlClass.SetActive(true);
+            btnClassAbility.image.sprite = localUser.GetPlayerClass().Image();
+        }
 
         //Add listeners to ALL necessary fields here.
         //Listeners for lobby
@@ -1090,6 +1095,7 @@ public class DungeonManager : MonoBehaviour
             pnlAspirationOptions.SetActive(false);
             aspirationChoice = -1;
         });
+        btnClassAbility.onClick.AddListener(delegate{ClassAbility();});
         //Set starting player names
         txtP1Name.text = players[0].GetName();
         txtLobbyP1.text = players[0].GetName();
@@ -3751,5 +3757,8 @@ public class DungeonManager : MonoBehaviour
             }
         }
         ResetTrade();
+    }
+    void ClassAbility(){
+        //need to implement
     }
 }

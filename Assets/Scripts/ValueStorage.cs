@@ -6,6 +6,7 @@ public class ValueStorage : MonoBehaviour
 {
     Player localPlayer;
     List<Player> playerList;
+    List<PlayerClass> availableClasses;
     List<Ability> shopAbilities;
     List<Ability> reserveAbilities;
     List<Equipment> commonEquipment;
@@ -98,6 +99,15 @@ public class ValueStorage : MonoBehaviour
     }
     public int AspirationCount(int row){
         return currentAspirations[row].Count;
+    }
+    public void setClasses(List<PlayerClass> classes){
+        availableClasses = classes;
+    }
+    public List<PlayerClass> getAvailableClasses(){
+        return availableClasses;
+    }
+    public void RemoveClass(PlayerClass p){
+        availableClasses.Remove(p);
     }
 
 }

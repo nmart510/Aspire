@@ -14,10 +14,10 @@ public class Monster
     int qualitytreasure = 0;
     int victorypoints = 0;
     bool allrewarded = false;
-    int clericgem = 0;
-    int warriorgem = 0;
-    int roguegem = 0;
-    int magegem = 0;
+    float clericgem = 0;
+    float warriorgem = 0;
+    float roguegem = 0;
+    float magegem = 0;
     int shield = 0;
     int powershield = 0;
     int evade = 0;
@@ -174,13 +174,13 @@ public class Monster
             if (value[0].CompareTo("victorypoints")==0) 
                 int.TryParse(value[1], out victorypoints);
             if (value[0].CompareTo("clericgem")==0) 
-                int.TryParse(value[1], out clericgem);
+                float.TryParse(value[1], out clericgem);
             if (value[0].CompareTo("warriorgem")==0) 
-                int.TryParse(value[1], out warriorgem);
+                float.TryParse(value[1], out warriorgem);
             if (value[0].CompareTo("roguegem")==0) 
-                int.TryParse(value[1], out roguegem);
+                float.TryParse(value[1], out roguegem);
             if (value[0].CompareTo("magegem")==0) 
-                int.TryParse(value[1], out magegem);
+                float.TryParse(value[1], out magegem);
             if (value[0].CompareTo("shield")==0) 
                 int.TryParse(value[1], out shield);
             if (value[0].CompareTo("powershield")==0) 
@@ -482,6 +482,9 @@ public class Monster
     }
     public bool getAllRewarded(){
         return allrewarded;
+    }
+    public float[] GetGem(){
+        return new float[]{warriorgem,clericgem,roguegem,magegem};
     }
     public Monster Clone(){
         Monster mon = new Monster();
