@@ -16,6 +16,7 @@ public class PlayerClass{
     int magegems = 0;
     int anygems = 0;
     string ability = null;
+    bool abilityUsed = false;
 
     public void loadCard(string filepath, string imagepath){
         //Loading image
@@ -74,6 +75,15 @@ public class PlayerClass{
     }
     public string getAbilityName(){
         return ability;
+    }
+    public void MarkAbilityUsed(){
+        abilityUsed = true;
+    }
+    public bool AbilityUsed(){
+        return abilityUsed;
+    }
+    public void ResetAbility(){
+        abilityUsed = false;
     }
 
 }

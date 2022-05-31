@@ -33,7 +33,7 @@ public class DungeonManager : MonoBehaviour
     public Text txtDamageInfo;
     //Trade elements
     public Button btnTradeWithP2, btnTradeWithP3, btnTradeWithP4;
-
+    
     //Lobby Elements
     public Button btnLobbyReady, btnLobbyLoot;
     public Button btnP2GL, btnP2GR, btnP2TrL, btnP2TrR, btnP2TpL, 
@@ -134,7 +134,9 @@ public class DungeonManager : MonoBehaviour
     int EquipOptionOffset = 0;
     //Class Elements and Done Button
     public Button btnClassAbility, btnTurnComplete, btnRunAway;
-
+    public GameObject pnlClassDiscard;
+    public Button btnCD1, btnCD2, btnCD3, btnCD4, 
+            btnCDLeft, btnCDRight, btnCDExit;
     //Collected Aspirations, Bounties, and Arsenal
     public Button btnAspirationsCollected, btnTrophies, btnArsenal;
 
@@ -154,6 +156,14 @@ public class DungeonManager : MonoBehaviour
     public Button btnHealConfirm, btnHP2L, btnHP2R,
              btnHP3L, btnHP3R, btnHP4L, btnHP4R;
     int[] heals = new int[4];
+
+    //Prevent Panel elements
+    public GameObject pnlPrevent;
+    public Text txtPreventP1, txtPreventP2, txtPreventP3, txtPreventP4, txtPreventAvailable,
+            txtPreventAmountP1, txtPreventAmountP2, txtPreventAmountP3, txtPreventAmountP4;
+    public Button btnPreventConfirm, btnP1L, btnP1R, btnP2L, btnP2R,
+             btnP3L, btnP3R, btnP4L, btnP4R;
+    int[] assignedPrevention = new int[]{0,0,0,0};
 
     //Flee panel elements
     public GameObject pnlFlee;
@@ -261,6 +271,7 @@ public class DungeonManager : MonoBehaviour
 
     //Lists for abilities in play
     List<Ability> inPlay = new List<Ability>();
+    List<Ability> CDCards = new List<Ability>();
     List<Ability> inHand = new List<Ability>();
     List<Ability> defenses = new List<Ability>();
     List<Equipment> viewArsenal = new List<Equipment>();
@@ -326,6 +337,10 @@ public class DungeonManager : MonoBehaviour
     bool aspirationsPending = false;
     bool readyToShop = false;
     int pendingSlot = 0;
+    bool monsterAttacking = false;
+    int CDOffset = 0;
+    int[] damageBeingDealt = new int[]{0,0,0,0};
+    int clericDamagePrevent = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -1096,6 +1111,34 @@ public class DungeonManager : MonoBehaviour
             aspirationChoice = -1;
         });
         btnClassAbility.onClick.AddListener(delegate{ClassAbility();});
+        //Listeners for Class Abilities
+        btnCD1.onClick.AddListener(delegate{PerformClassAbility(0);});
+        btnCD2.onClick.AddListener(delegate{PerformClassAbility(1);});
+        btnCD3.onClick.AddListener(delegate{PerformClassAbility(2);});
+        btnCD4.onClick.AddListener(delegate{PerformClassAbility(3);});
+        btnCDLeft.onClick.AddListener(delegate{CDOffset--;ReloadClassDiscard();});
+        btnCDRight.onClick.AddListener(delegate{CDOffset++;ReloadClassDiscard();});
+        btnCDExit.onClick.AddListener(delegate{pnlClassDiscard.SetActive(false);});
+        //Listeners for Cleric Damage Prevention
+        btnPreventConfirm.onClick.AddListener(delegate{
+            pnlPrevent.SetActive(false);
+            damagePrevented += assignedPrevention[0] + assignedPrevention[1] + assignedPrevention[2] + assignedPrevention[3];
+            if (damagePrevented > damagePreventedHigh) damagePreventedHigh = damagePrevented;
+            string preventList = "*PREVENT";
+            for (int p = 0; p < players.Count; p++){
+                preventList += ","+players[p].GetName()+":"+assignedPrevention[p];
+            }
+            localUser.Write(preventList);
+            assignedPrevention = new int[]{0,0,0,0};
+        });
+        btnP1L.onClick.AddListener(delegate{clericDamagePrevent++;assignedPrevention[0]--;ReloadPrevent();});
+        btnP1R.onClick.AddListener(delegate{clericDamagePrevent--;assignedPrevention[0]++;ReloadPrevent();});
+        btnP2L.onClick.AddListener(delegate{clericDamagePrevent++;assignedPrevention[1]--;ReloadPrevent();});
+        btnP2R.onClick.AddListener(delegate{clericDamagePrevent--;assignedPrevention[1]++;ReloadPrevent();});
+        btnP3L.onClick.AddListener(delegate{clericDamagePrevent++;assignedPrevention[2]--;ReloadPrevent();});
+        btnP3R.onClick.AddListener(delegate{clericDamagePrevent--;assignedPrevention[2]++;ReloadPrevent();});
+        btnP4L.onClick.AddListener(delegate{clericDamagePrevent++;assignedPrevention[3]--;ReloadPrevent();});
+        btnP4R.onClick.AddListener(delegate{clericDamagePrevent--;assignedPrevention[3]++;ReloadPrevent();});
         //Set starting player names
         txtP1Name.text = players[0].GetName();
         txtLobbyP1.text = players[0].GetName();
@@ -1455,6 +1498,7 @@ public class DungeonManager : MonoBehaviour
                         // potions UNTIL they confirm the notice. Before that, a *PENDING message will 
                         // inform every player in said combat how much damage each player is expected to
                         // take. If any damage is reduced, this will update accordingly.
+                        monsterAttacking = true;
                         int.TryParse(message[1], out int shb);
                         int.TryParse(message[2], out int dmg);
                         bool.TryParse(message[3], out bool hmg);
@@ -1476,14 +1520,20 @@ public class DungeonManager : MonoBehaviour
                     if (message[0].CompareTo("*DAMAGEUPDATE") == 0){
                         Debug.Log("Recieved damage update");
                         string damageInfo = monster.GetName() + " is attacking for the following damage amounts:\n";
-                        for (int i = 1; i < message.Length; i++) damageInfo += message[i] + "\n";
+                        for (int i = 1; i < message.Length; i++) {
+                            damageInfo += message[i] + "\n";
+                            for (int p = 0; p < players.Count; p++){
+                                if (players[p].GetName().CompareTo(message[i].Split(':')[0])==0)
+                                    int.TryParse(message[i].Split(':')[1].Trim(), out damageBeingDealt[p]);
+                            }
+                        }
                         damageInfo += "You can still use potions and abilities at this time.";
                         txtDamageInfo.text = damageInfo;
                     }
                     if (message[0].CompareTo("*MONSTERACTION") == 0){
                         noTurnForMonster = false;
                     }
-                    if (message[0].CompareTo("*PREVENT") == 0){
+                    if (message[0].CompareTo("*PREVENT") == 0){//I don't think this is even being used
                         int.TryParse(message[1], out int prevented);
                         pendingDamage -= prevented;
                         localUser.Write("*DAMAGE,"+pendingDamage);
@@ -1507,7 +1557,9 @@ public class DungeonManager : MonoBehaviour
                         pendingType = "";
                         pendingTag = "";
                         pnlConfirmDamage.SetActive(false);
+                        monsterAttacking = false;
                         CheckClaimConditions();
+                        damageBeingDealt = new int[]{0,0,0,0};
                     }
                     if (message[0].CompareTo("*MILL") == 0){
                         Ability temp = localUser.Deck().Draw();
@@ -2274,7 +2326,7 @@ public class DungeonManager : MonoBehaviour
             if (card.RestoresShields()) RestoreEquipment();
             for (int i = 0; i < card.getDraw(); i++){
                 inHand.Add(localUser.Deck().Draw());
-                extraDrawn ++;
+                extraDrawn++;
                 if (extraDrawn > extraDrawnHigh) extraDrawnHigh = extraDrawn;
             }
             localUser.changeAP(card.getEnergy());
@@ -3759,6 +3811,133 @@ public class DungeonManager : MonoBehaviour
         ResetTrade();
     }
     void ClassAbility(){
-        //need to implement
+        // Cleric limited to during the damage prevention portion of monster attack
+        //Everyone else, limited to their turn, and once per turn.
+        if (localUser.GetPlayerClass().AbilityUsed() == false){
+            if ((localUser.IsTurn()&& playerClass.CompareTo("Cleric")!=0)|| (playerClass.CompareTo("Cleric")==0 && monsterAttacking)){
+                pnlClassDiscard.SetActive(true);
+                CDOffset = 0;
+                ReloadClassDiscard();
+            }
+        }
     }
+    void ReloadClassDiscard(){
+        CDCards = new List<Ability>();
+        if (playerClass.CompareTo("Warrior")==0)
+            foreach (Ability a in inHand){
+                if (a.isDefense()) CDCards.Add(a);
+            }
+        if (playerClass.CompareTo("Cleric")==0)
+            foreach (Ability a in inHand){
+                if (a.isAttack()) CDCards.Add(a);
+            }
+        if (playerClass.CompareTo("Rogue")==0)
+            foreach (Ability a in inHand){
+                if (a.isTechnique()) CDCards.Add(a);
+            }
+        if (playerClass.CompareTo("Mage")==0)
+            CDCards = inHand;
+        if (CDCards.Count > 0){
+            btnCD1.gameObject.SetActive(true);
+            btnCD1.image.sprite = CDCards[0+CDOffset].Image();
+        } else {
+            btnCD1.gameObject.SetActive(false);
+            btnCD1.image.sprite = empty;
+        }
+        if (CDCards.Count > 1){
+            btnCD2.gameObject.SetActive(true);
+            btnCD2.image.sprite = CDCards[1+CDOffset].Image();
+        } else {
+            btnCD2.gameObject.SetActive(false);
+            btnCD2.image.sprite = empty;
+        }
+        if (CDCards.Count > 2){
+            btnCD3.gameObject.SetActive(true);
+            btnCD3.image.sprite = CDCards[2+CDOffset].Image();
+        } else {
+            btnCD3.gameObject.SetActive(false);
+            btnCD3.image.sprite = empty;
+        }
+        if (CDCards.Count > 3){
+            btnCD4.gameObject.SetActive(true);
+            btnCD4.image.sprite = CDCards[3+CDOffset].Image();
+        } else {
+            btnCD4.gameObject.SetActive(false);
+            btnCD4.image.sprite = empty;
+        }
+        if (CDCards.Count > 4){
+            if (CDOffset > 0) btnCDLeft.gameObject.SetActive(true);
+            else btnCDLeft.gameObject.SetActive(false);
+            if (CDOffset < CDCards.Count-4) btnCDRight.gameObject.SetActive(true);
+            else btnCDRight.gameObject.SetActive(false);
+        } else {
+            btnCDLeft.gameObject.SetActive(false);
+            btnCDRight.gameObject.SetActive(false);
+        }
+    }
+    void PerformClassAbility(int index){
+        pnlClassDiscard.SetActive(false);
+        Ability temp = CDCards[index + CDOffset];
+        inHand.Remove(temp);
+        ReloadHand();
+        localUser.Deck().Discard(temp);
+        ReloadDiscard();
+        localUser.Write("*CHAT,"+localUser.GetName()+" used "+localUser.GetPlayerClass().getAbilityName());
+        if (playerClass.CompareTo("Mage")==0){
+            inHand.Add(localUser.Deck().Draw());
+            extraDrawn++;
+            if (extraDrawn > extraDrawnHigh) extraDrawnHigh = extraDrawn;
+        } else if (playerClass.CompareTo("Rogue")==0){
+            localUser.changeAP(1);
+        } else if (playerClass.CompareTo("Warrior")==0){
+            skillBoost += temp.getSymbolsForWarrior();
+        } else if (playerClass.CompareTo("Cleric")==0){
+            clericDamagePrevent = temp.getSymbolsForCleric();
+            pnlPrevent.SetActive(true);
+        }
+    }    
+    void ReloadPrevent(){
+        txtPreventP1.text = localUser.GetName();
+        txtPreventAvailable.text = ""+clericDamagePrevent;
+        txtPreventAmountP1.text = assignedPrevention[0]+"/"+damageBeingDealt[0];
+        if (clericDamagePrevent == 0){
+            btnP1R.gameObject.SetActive(false);
+            btnP2R.gameObject.SetActive(false);
+            btnP3R.gameObject.SetActive(false);
+            btnP4R.gameObject.SetActive(false);
+        } else {
+            btnP1R.gameObject.SetActive(true);
+            btnP2R.gameObject.SetActive(true);
+            btnP3R.gameObject.SetActive(true);
+            btnP4R.gameObject.SetActive(true);
+        }
+        if (assignedPrevention[0] == damageBeingDealt[0]) btnP1R.gameObject.SetActive(false);
+        if (assignedPrevention[1] == damageBeingDealt[1]) btnP2R.gameObject.SetActive(false);
+        if (assignedPrevention[2] == damageBeingDealt[2]) btnP3R.gameObject.SetActive(false);
+        if (assignedPrevention[3] == damageBeingDealt[3]) btnP4R.gameObject.SetActive(false);
+        if (assignedPrevention[0] == 0) btnP1L.gameObject.SetActive(false);
+        else btnP1L.gameObject.SetActive(true);
+        if (assignedPrevention[1] == 0) btnP2L.gameObject.SetActive(false);
+        else btnP2L.gameObject.SetActive(true);
+        if (assignedPrevention[2] == 0) btnP3L.gameObject.SetActive(false);
+        else btnP3L.gameObject.SetActive(true);
+        if (assignedPrevention[3] == 0) btnP4L.gameObject.SetActive(false);
+        else btnP4L.gameObject.SetActive(true);
+        if (combatants.Contains(players[1])) { 
+            txtPreventP2.gameObject.SetActive(true);
+            txtPreventP2.text = players[1].GetName();
+            txtPreventAmountP2.text = assignedPrevention[1]+"/"+damageBeingDealt[1];
+        } else txtPreventP2.gameObject.SetActive(false);
+        if (combatants.Contains(players[2])) { 
+            txtPreventP3.gameObject.SetActive(true);
+            txtPreventP3.text = players[2].GetName();
+            txtPreventAmountP3.text = assignedPrevention[2]+"/"+damageBeingDealt[2];
+        } else txtPreventP3.gameObject.SetActive(false);
+        if (combatants.Contains(players[3])) { 
+            txtPreventP4.gameObject.SetActive(true);
+            txtPreventP4.text = players[3].GetName();
+            txtPreventAmountP4.text = assignedPrevention[3]+"/"+damageBeingDealt[3];
+        } else txtPreventP4.gameObject.SetActive(false);
+    }
+
 }

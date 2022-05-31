@@ -50,6 +50,7 @@
      <Compile Include="Assets\Scripts\Cards\Ability.cs" />
      <Compile Include="Assets\Scripts\UIManager.cs" />
      <Compile Include="Assets\Scripts\LobbyManager.cs" />
+     <Compile Include="Assets\Scripts\Cards\Boss.cs" />
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />

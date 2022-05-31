@@ -5,8 +5,8 @@ using System.IO;
 
 public class Monster
 {
-    Sprite cardImage = null;
-    string monName = "Training Dummy";
+    protected Sprite cardImage = null;
+    protected string monName = "Training Dummy";
     string subtype = null;
     int tier = 0;
     int gold = 0;
@@ -129,7 +129,7 @@ public class Monster
     bool specialflee = false;
     int bonusaction = 0;
     int ethereal = 0;
-    bool isMod = false;
+    protected bool isMod = false;
     List<Monster> mods = null;
     int currentHP = 0;
     int currentShields = 0;

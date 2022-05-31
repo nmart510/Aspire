@@ -276,4 +276,7 @@ public class LobbyManager : MonoBehaviour
         }
         return temp;
     }
+    List<Boss> LoadBosses(){
+        
+    }
 }

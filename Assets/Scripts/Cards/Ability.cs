@@ -331,6 +331,13 @@ public class Ability
     public bool IsBasicOrClass(){
         return (source.CompareTo("Basic")==0 || source.CompareTo("Class")==0)? true: false;
     }
+    public int getSymbolsForWarrior(){
+        return shield + powershield + (shieldrestore?1:0) + damage + (pierce?1:0) + energy + 
+            heal + (critical?1:0) + evade + draw;
+    }
+    public int getSymbolsForCleric(){
+        return damage;
+    }
     public Ability Clone(){
         Ability temp = new Ability();
         temp.cardImage = cardImage;
