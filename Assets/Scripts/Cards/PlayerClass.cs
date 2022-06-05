@@ -40,7 +40,7 @@ public class PlayerClass{
             if (value[0].CompareTo("victorypoints")==0)
                 int.TryParse(value[1],out int victorypoints);
             if (value[0].CompareTo("strikes")==0)
-                name = value[1];
+                strikes = value[1];
             if (value[0].CompareTo("clericgem")==0)
                 int.TryParse(value[1],out int clericgems);
             if (value[0].CompareTo("warriorgem")==0)

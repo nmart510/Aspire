@@ -33,7 +33,14 @@ public class DungeonManager : MonoBehaviour
     public Text txtDamageInfo;
     //Trade elements
     public Button btnTradeWithP2, btnTradeWithP3, btnTradeWithP4;
-    
+    //Boss Lobby
+    public GameObject pnlBossLobby;
+    public Text txtBLP1Name, txtBLP2Name, txtBLP3Name, txtBLP4Name;
+    public Button btnBLJoin, btnBLPass, btnBLReady;
+    // Boss Minions/Gems
+    public GameObject pnlMinions, pnlGems;
+    public Image imgMinions, imgGems;
+    public Text txtMinions, txtGems;
     //Lobby Elements
     public Button btnLobbyReady, btnLobbyLoot;
     public Button btnP2GL, btnP2GR, btnP2TrL, btnP2TrR, btnP2TpL, 
@@ -341,6 +348,9 @@ public class DungeonManager : MonoBehaviour
     int CDOffset = 0;
     int[] damageBeingDealt = new int[]{0,0,0,0};
     int clericDamagePrevent = 0;
+    bool[] joiningBoss = new bool[]{false,false,false,false};
+    bool[] passingBoss = new bool[]{false,false,false,false};
+    bool bossPhase = false;
 
     // Start is called before the first frame update
     void Start()
@@ -349,7 +359,8 @@ public class DungeonManager : MonoBehaviour
         players = vs.GetPlayers();
         localUser = vs.getLocalPlayer();
         combatants = new List<Player>();
-        playerClass = localUser.GetPlayerClass().getName();
+        if (localUser.GetPlayerClass() != null)
+            playerClass = localUser.GetPlayerClass().getName();
         if (playerClass != null){
             pnlClass.SetActive(true);
             btnClassAbility.image.sprite = localUser.GetPlayerClass().Image();
@@ -420,7 +431,7 @@ public class DungeonManager : MonoBehaviour
             txtTradeOfferMessage.text = "Trade Request sent to "+tradePartner.GetName();
             localUser.Write("*TRADEREQUEST,"+tradePartner.GetName()+","+localUser.GetName());
         });
-        btnTradeP2.onClick.AddListener(delegate{tradePartner = players[2]; 
+        btnTradeP3.onClick.AddListener(delegate{tradePartner = players[2]; 
             pnlTradeOffer.SetActive(true);
             btnTradeOfferAccept.gameObject.SetActive(false);
             btnTradeOfferReject.gameObject.SetActive(false);
@@ -428,7 +439,7 @@ public class DungeonManager : MonoBehaviour
             txtTradeOfferMessage.text = "Trade Request sent to "+tradePartner.GetName();
             localUser.Write("*TRADEREQUEST,"+tradePartner.GetName()+","+localUser.GetName());
         });
-        btnTradeP2.onClick.AddListener(delegate{tradePartner = players[3]; 
+        btnTradeP4.onClick.AddListener(delegate{tradePartner = players[3]; 
             pnlTradeOffer.SetActive(true);
             btnTradeOfferAccept.gameObject.SetActive(false);
             btnTradeOfferReject.gameObject.SetActive(false);
@@ -447,7 +458,7 @@ public class DungeonManager : MonoBehaviour
             pnlTradeOffer.SetActive(false);
         });
         btnTradeOfferAccept.onClick.AddListener(delegate{
-            localUser.Write("*ACCEPTRADEREQUEST,"+tradePartner.GetName());
+            localUser.Write("*ACCEPTTRADEREQUEST,"+tradePartner.GetName());
             pnlTradeOffer.SetActive(false);
             pnlTradeActive.SetActive(true);
             ReloadTradeMenu();
@@ -752,7 +763,7 @@ public class DungeonManager : MonoBehaviour
         btnArsenal6.onClick.AddListener(delegate{UseTome(5+ArsenalOffset);});
         btnAddToDeck.onClick.AddListener(delegate{
             localUser.Deck().Add(activeTome.getLinkedAbility());
-            if (localUser.Arsenal()[localUser.Arsenal().Count-1]==activeTome) ArsenalOffset--;
+            if (localUser.Arsenal().Count - 6 == ArsenalOffset && ArsenalOffset > 0) ArsenalOffset--;
             localUser.Arsenal().Remove(activeTome);
             pnlTomeUse.SetActive(false); activeTome = null;
             ReloadArsenalView();
@@ -1034,62 +1045,67 @@ public class DungeonManager : MonoBehaviour
                     txtTributeMessage.text = "Insufficient gold for tribute";
                 }
             }
-            if (tributePaid) localUser.Write("*CLAIM,"+vs.PeekAspiration(aspirationChoice,0).GetName());
+            if (tributePaid) {
+                localUser.Write("*CLAIM,"+vs.PeekAspiration(aspirationChoice,0).GetName());
+                btnAspirationClaimSkip.gameObject.SetActive(false);
+                pnlAspirationOptions.SetActive(false);
+                pnlTributeGold.SetActive(false);
+            }
         });
         btnTributeAbility1.onClick.AddListener(delegate{
             pnlTributeGold.SetActive(true);
             abilityTribute = tributeAbilities[0+tributeAbilityOffset];
-            txtTributeMessage.text = "Turn in "+tributeAbilities[0+tributeAbilityOffset].getName()+" Gold as Tribute for Aspiration?";
+            txtTributeMessage.text = "Turn in "+tributeAbilities[0+tributeAbilityOffset].getName()+" as Tribute for Aspiration?";
         });
         btnTributeAbility2.onClick.AddListener(delegate{
             pnlTributeGold.SetActive(true);
             abilityTribute = tributeAbilities[1+tributeAbilityOffset];
-            txtTributeMessage.text = "Turn in "+tributeAbilities[1+tributeAbilityOffset].getName()+" Gold as Tribute for Aspiration?";
+            txtTributeMessage.text = "Turn in "+tributeAbilities[1+tributeAbilityOffset].getName()+" as Tribute for Aspiration?";
         });
         btnTributeAbility3.onClick.AddListener(delegate{
             pnlTributeGold.SetActive(true);
             abilityTribute = tributeAbilities[2+tributeAbilityOffset];
-            txtTributeMessage.text = "Turn in "+tributeAbilities[2+tributeAbilityOffset].getName()+" Gold as Tribute for Aspiration?";
+            txtTributeMessage.text = "Turn in "+tributeAbilities[2+tributeAbilityOffset].getName()+" as Tribute for Aspiration?";
         });
         btnTributeAbility4.onClick.AddListener(delegate{
             pnlTributeGold.SetActive(true);
             abilityTribute = tributeAbilities[3+tributeAbilityOffset];
-            txtTributeMessage.text = "Turn in "+tributeAbilities[3+tributeAbilityOffset].getName()+" Gold as Tribute for Aspiration?";
+            txtTributeMessage.text = "Turn in "+tributeAbilities[3+tributeAbilityOffset].getName()+" as Tribute for Aspiration?";
         });
         btnTributeEquipment1.onClick.AddListener(delegate{
             pnlTributeGold.SetActive(true);
             itemTribute = tributeItems[0+tributeEquipmentOffset];
-            txtTributeMessage.text = "Turn in "+tributeItems[0+tributeEquipmentOffset].getName()+" Gold as Tribute for Aspiration?";
+            txtTributeMessage.text = "Turn in "+tributeItems[0+tributeEquipmentOffset].getName()+" as Tribute for Aspiration?";
         });
         btnTributeEquipment2.onClick.AddListener(delegate{
             pnlTributeGold.SetActive(true);
             itemTribute = tributeItems[1+tributeEquipmentOffset];
-            txtTributeMessage.text = "Turn in "+tributeItems[1+tributeEquipmentOffset].getName()+" Gold as Tribute for Aspiration?";
+            txtTributeMessage.text = "Turn in "+tributeItems[1+tributeEquipmentOffset].getName()+" as Tribute for Aspiration?";
         });
         btnTributeEquipment3.onClick.AddListener(delegate{
             pnlTributeGold.SetActive(true);
             itemTribute = tributeItems[2+tributeEquipmentOffset];
-            txtTributeMessage.text = "Turn in "+tributeItems[2+tributeEquipmentOffset].getName()+" Gold as Tribute for Aspiration?";
+            txtTributeMessage.text = "Turn in "+tributeItems[2+tributeEquipmentOffset].getName()+" as Tribute for Aspiration?";
         });
         btnTributeEquipment4.onClick.AddListener(delegate{
             pnlTributeGold.SetActive(true);
             itemTribute = tributeItems[3+tributeEquipmentOffset];
-            txtTributeMessage.text = "Turn in "+tributeItems[3+tributeEquipmentOffset].getName()+" Gold as Tribute for Aspiration?";
+            txtTributeMessage.text = "Turn in "+tributeItems[3+tributeEquipmentOffset].getName()+" as Tribute for Aspiration?";
         });
         btnTributeTrophy1.onClick.AddListener(delegate{
             pnlTributeGold.SetActive(true);
             trophyTribute = tributeTrophies[0+tributeTrophyOffset];
-            txtTributeMessage.text = "Turn in "+tributeTrophies[0+tributeTrophyOffset].GetName()+" Gold as Tribute for Aspiration?";
+            txtTributeMessage.text = "Turn in "+tributeTrophies[0+tributeTrophyOffset].GetName()+" as Tribute for Aspiration?";
         });
         btnTributeTrophy2.onClick.AddListener(delegate{
             pnlTributeGold.SetActive(true);
             trophyTribute = tributeTrophies[1+tributeTrophyOffset];
-            txtTributeMessage.text = "Turn in "+tributeTrophies[1+tributeTrophyOffset].GetName()+" Gold as Tribute for Aspiration?";
+            txtTributeMessage.text = "Turn in "+tributeTrophies[1+tributeTrophyOffset].GetName()+" as Tribute for Aspiration?";
         });
         btnTributeTrophy3.onClick.AddListener(delegate{
             pnlTributeGold.SetActive(true);
             trophyTribute = tributeTrophies[2+tributeTrophyOffset];
-            txtTributeMessage.text = "Turn in "+tributeTrophies[2+tributeTrophyOffset].GetName()+" Gold as Tribute for Aspiration?";
+            txtTributeMessage.text = "Turn in "+tributeTrophies[2+tributeTrophyOffset].GetName()+" as Tribute for Aspiration?";
         });
         btnTributeAbilityLeftScroll.onClick.AddListener(delegate{tributeAbilityOffset--;ReloadTributeAbility();});
         btnTributeAbilityRightScroll.onClick.AddListener(delegate{tributeAbilityOffset++;ReloadTributeAbility();});
@@ -1139,6 +1155,10 @@ public class DungeonManager : MonoBehaviour
         btnP3R.onClick.AddListener(delegate{clericDamagePrevent--;assignedPrevention[2]++;ReloadPrevent();});
         btnP4L.onClick.AddListener(delegate{clericDamagePrevent++;assignedPrevention[3]--;ReloadPrevent();});
         btnP4R.onClick.AddListener(delegate{clericDamagePrevent--;assignedPrevention[3]++;ReloadPrevent();});
+        //Boss Lobby
+        btnBLJoin.onClick.AddListener(delegate{localUser.Write("*JOINBOSS,"+localUser.GetName());});
+        btnBLPass.onClick.AddListener(delegate{localUser.Write("*PASSBOSS,"+localUser.GetName());});
+        btnBLReady.onClick.AddListener(delegate{localUser.Write("*STARTBOSS");});
         //Set starting player names
         txtP1Name.text = players[0].GetName();
         txtLobbyP1.text = players[0].GetName();
@@ -1254,6 +1274,14 @@ public class DungeonManager : MonoBehaviour
                         btnTradeOfferCancel.gameObject.SetActive(false);
                     }
                 }
+                if (message[0].CompareTo("*GEMCOUNT") == 0){
+                    int.TryParse(message[1], out int count);
+                    ((Boss) monster).setGem(count);
+                }
+                if (message[0].CompareTo("*MINONCOUNT") == 0){
+                    int.TryParse(message[1], out int count);
+                    ((Boss) monster).setMinion(count);
+                }
                 if (message[0].CompareTo("*TRADECANCEL") == 0){
                     ResetTrade();
                 }
@@ -1300,10 +1328,40 @@ public class DungeonManager : MonoBehaviour
                         if (vs.AspirationCount(row)==0)
                             aspirationsPending = true;
                     }
+                    ReloadAspirations();
+                }
+                if (message[0].CompareTo("*BOSS") == 0){
+                    if (vs.getBoss() == null) {
+                        foreach(Boss b in vs.getBossList()) if (b.GetName().CompareTo(message[1])==0){
+                            b.setStats(b.Health()[1],b.Shields()[1],b.PowerShields()[1],0,0,0);
+                            vs.setBoss(b);
+                        }
+                        foreach(Boss b in vs.getBossMods()) if (b.GetName().CompareTo(message[2])==0){
+                            vs.getBoss().setStarterMod(b);
+                        }
+                    }
+                    bossPhase = true;
+                    monster = vs.getBoss();
+                    monsterTier = 5;
+                    if (((Boss)monster).usesMinions()) pnlMinions.SetActive(true);
+                    else pnlGems.SetActive(true);
+                    ReloadMonster();
+                }
+                if (message[0].CompareTo("*BOSSLOBBY") == 0){
+                    if (localUser.GetName().CompareTo(message[1])==0) localUser.IsLead(true);
+                    else localUser.IsLead(false);
+                    pnlBossLobby.SetActive(true);
+                    lobbyStep = true;
+                    ReloadBossLobby();
+                }
+                if (message[0].CompareTo("*ENDOFGAME") == 0){
+                    SceneManager.LoadScene("Score");
                 }
                 if (message[0].CompareTo("*ENDOFDAY") == 0){
                     foreach (Player p in players){
                         p.setHealth(p.getHealth()[1]);
+                        foreach (Equipment e in localUser.Arsenal())
+                            e.ResetDaily();
                     }
                     localUser.Write("*SETUP");
                 }
@@ -1408,6 +1466,26 @@ public class DungeonManager : MonoBehaviour
                         }
                     }
                     SwitchToRewards();
+                }
+                if (message[0].CompareTo("*JOINBOSS") == 0){
+                    for (int p = 0; p < players.Count; p++){
+                        if (players[p].GetName().CompareTo(message[1])==0){
+                            joiningBoss[p] = true;
+                            passingBoss[p] = false;
+                            combatants.Add(players[p]);
+                        }
+                    }
+                    ReloadBossLobby();
+                }
+                if (message[0].CompareTo("*PASSBOSS") == 0){
+                    for (int p = 0; p < players.Count; p++){
+                        if (players[p].GetName().CompareTo(message[1])==0){
+                            joiningBoss[p] = false;
+                            passingBoss[p] = true;
+                            combatants.Remove(players[p]);
+                        }
+                    }
+                    ReloadBossLobby();
                 }
                 if (message[0].CompareTo("*UPDATE") == 0){
                     for (int i = 1; i < message.Length; i++){
@@ -1655,9 +1733,11 @@ public class DungeonManager : MonoBehaviour
                                 else {aspirationClaimed[row] = message[2]; break;}
                             }
                         }
+                        pnlAspirationOptions.SetActive(false);
                         ReloadAspirations();
                     }
                     if (message[0].CompareTo("*ALLCLAIMED") == 0){
+                        Debug.Log("Aspirations Claimed by: "+aspirationClaimed[0]+" , "+aspirationClaimed[1]+" , "+aspirationClaimed[2]+" , "+aspirationClaimed[3]);
                         for (int row = 0; row < 4; row++){
                             if (aspirationClaimed[row].CompareTo(localUser.GetName())==0) {
                                 localUser.AddAspiration(vs.PopAspiration(row));
@@ -1668,6 +1748,8 @@ public class DungeonManager : MonoBehaviour
                                 continue;
                             }
                         }
+                        aspirationClaimed = new string[]{"","","",""};
+                        ReloadAspirations();
                         if (localUser.IsLead()){
                             for (int row = 0; row < 4; row++){
                                 if (vs.AspirationCount(row)==0)
@@ -1857,7 +1939,9 @@ public class DungeonManager : MonoBehaviour
         for (int j = 0; j < players.Count; j++){
             players[j].IsReady(false);
         } //Second, close the lobby screen.
+        localUser.SetAP(0);
         pnlLobby.SetActive(false);
+        pnlBossLobby.SetActive(false);
         //Third, if participating in combat opens the combat panels and closes non-combat panels.
         if(combatants.Contains(localUser)){
             pnlTrade.SetActive(false);
@@ -1943,18 +2027,21 @@ public class DungeonManager : MonoBehaviour
     }
     void AcceptRewards(){
         //handling to ensure loot is divided as planned
-        string lootList = "*ACCEPT";
-        for (int i = 0; i < players.Count; i++){
-            lootList += ","+players[i].GetName()+";"+rewardGold[i]+";"+rewardTrophy[i]+";"+rewardRoll[i]+";"+rewardVP[i];
-            for (int j = 0; j < RewardDrops.Count;j++){
-                if (rewardsAssignment[j].CompareTo(players[i].GetName())==0)
-                    lootList += ";"+RewardDrops[j].getName();
+        if(rewardCount[0] == rewardTreasure[0] && rewardCount[1] == rewardTreasure[1] && 
+                rewardCount[2] == rewardTreasure[2] && rewardCount[3] == rewardTreasure[3]){
+            string lootList = "*ACCEPT";
+            for (int i = 0; i < players.Count; i++){
+                lootList += ","+players[i].GetName()+";"+rewardGold[i]+";"+rewardTrophy[i]+";"+rewardRoll[i]+";"+rewardVP[i];
+                for (int j = 0; j < RewardDrops.Count;j++){
+                    if (rewardsAssignment[j].CompareTo(players[i].GetName())==0)
+                        lootList += ";"+RewardDrops[j].getName();
+                }
             }
+            localUser.Write(lootList);
+            while(combatants.Count > 0)
+                combatants.RemoveAt(0);
+            CheckClaimConditions();
         }
-        localUser.Write(lootList);
-        while(combatants.Count > 0)
-            combatants.RemoveAt(0);
-        CheckClaimConditions();
     }
     void rewardChange(int _player, int _reward, bool _assigned ){
         string temp = rewardsAssignment[_reward-1];
@@ -2289,6 +2376,7 @@ public class DungeonManager : MonoBehaviour
             cardsPlayed++;
             if (cardsPlayed > cardsPlayedHigh) cardsPlayedHigh = cardsPlayed;
             Ability card = inHand[num + handOffset];
+            localUser.Write("*CHAT,"+localUser.GetName()+" used "+card.getName()+"!");
             if (card.GetSPSK().CompareTo("Spell")==0){
                 spellsPlayed++;
                 if (spellsPlayed > spellsPlayedHigh) spellsPlayedHigh = spellsPlayed;
@@ -2827,7 +2915,7 @@ public class DungeonManager : MonoBehaviour
                 txtMonsterShields.text = "NA";
                 imgMonsterShields.transform.localScale = new Vector3(0,1,1);
             }
-            if (monster.getMods().Count == 0) pnlMMods.SetActive(false);
+            if (monster.getMods().Count == 0 && bossPhase == false) pnlMMods.SetActive(false);
             else{
                 if (monster.getMods().Count >= 1){
                     btnMMod1.gameObject.SetActive(true);
@@ -2873,6 +2961,25 @@ public class DungeonManager : MonoBehaviour
                 } else {
                     btnMModLeft.gameObject.SetActive(false);
                     btnMModRight.gameObject.SetActive(false);
+                }
+                if (bossPhase){
+                    imgModShield1.gameObject.transform.parent.gameObject.SetActive(false);
+                    imgModShield2.gameObject.transform.parent.gameObject.SetActive(false);
+                    imgModShield3.gameObject.transform.parent.gameObject.SetActive(false);
+                    btnMMod1.gameObject.SetActive(true);
+                    btnMMod1.image.sprite = ((Boss) monster).getStarterMod().Image();
+                    if (((Boss) monster).getEnragedMod() != null){
+                        btnMMod2.gameObject.SetActive(true);
+                        btnMMod2.image.sprite = ((Boss) monster).getEnragedMod().Image();
+                    }
+                    if (((Boss) monster).getExtraMod() != null){
+                        btnMMod2.gameObject.SetActive(true);
+                        btnMMod2.image.sprite = ((Boss) monster).getExtraMod().Image();
+                    }
+                    imgGems.gameObject.transform.localScale = new Vector3((float)((Boss)monster).getGems()/6,1f,1f);
+                    txtGems.text = (float)((Boss)monster).getGems()+"/"+6;
+                    imgMinions.gameObject.transform.localScale = new Vector3((float)((Boss)monster).getMinions()/(1+players.Count),1f,1f);
+                    txtMinions.text = (float)((Boss)monster).getMinions()+"/"+(1+players.Count);
                 }
             }
         
@@ -3177,100 +3284,102 @@ public class DungeonManager : MonoBehaviour
     void CheckClaimConditions(){
         for (int i = 0; i < conditionsMet.Length; i++){
             Aspiration a = vs.PeekAspiration(i,0);
-            if (a.IsTribute() != null) {conditionsMet[i] = true; continue;}//tributes;
-            if (a.HasRogueEquipped()){//Battle-Ready
-                foreach (Equipment e in localUser.GetEquipped()){
-                    if (e != null && e.IsRogue()) {conditionsMet[i] = true; break;}
-                } if (conditionsMet[i] == true) continue;
-            }
-            if (a.HasMageEquipped()){//Battle-Ready
-                foreach (Equipment e in localUser.GetEquipped()){
-                    if (e != null && e.IsMage()) {conditionsMet[i] = true; break;}
-                } if (conditionsMet[i] == true) continue;
-            }
-            if (a.HasWarriorEquipped()){//Battle-Ready
-                foreach (Equipment e in localUser.GetEquipped()){
-                    if (e != null && e.IsWarrior()) {conditionsMet[i] = true; break;}
-                } if (conditionsMet[i] == true) continue;
-            }
-            if (a.HasClericEquipped()){//Battle-Ready
-                foreach (Equipment e in localUser.GetEquipped()){
-                    if (e != null && e.IsCleric()) {conditionsMet[i] = true; break;}
-                } if (conditionsMet[i] == true) continue;
-            }//Test/Display
-            if (a.ExtraCardsToDraw() > 0 && extraDrawnHigh >= a.ExtraCardsToDraw()){
-                conditionsMet[i] = true; continue;
-            }//Test/Display
-            if (a.PreventDamage() > 0 && damagePreventedHigh >= a.PreventDamage()){
-                conditionsMet[i] = true; continue;
-            }//Test/Display
-            if (a.DealDamage() > 0 && damageDealtHigh >= a.DealDamage()){
-                conditionsMet[i] = true; continue;
-            }//Test/Display
-            if (a.PlayCards() > 0 && cardsPlayedHigh >= a.PlayCards()){
-                conditionsMet[i] = true; continue;
-            }//Eliminate bounties
-            if (a.DefeatMonster() != null && a.DefeatMonster().CompareTo(monsterType)==0){
-                conditionsMet[i] = true; continue;
-            }//Path of
-            if (a.PlayDefense() > 0 && defensesPlayedHigh >= a.PlayDefense()){
-                conditionsMet[i] = true; continue;
-            }//Path of
-            if (a.PlayAttack() > 0 && attacksPlayedHigh >= a.PlayAttack()){
-                conditionsMet[i] = true; continue;
-            }//Path of
-            if (a.PlayTechnique() > 0 && techniquesPlayedHigh >= a.PlayTechnique()){
-                conditionsMet[i] = true; continue;
-            }//Path of
-            if (a.PlayDifferent() > 0 && typesPlayedHigh >= a.PlayDifferent()){
-                conditionsMet[i] = true; continue;
-            }//Spell Slinger
-            if (a.PlaySpells() > 0 && a.HaveSpells() > 0 && spellsPlayedHigh >= a.PlaySpells()){
-                int spellCount = 0;
-                foreach (Ability s in localUser.Deck().InspectDeck()) {
-                    if (s.GetCardType().CompareTo("Spell") == 0 && s.GetSource().CompareTo("Shop")==0){
-                        spellCount++;
-                    }
+            if (a != null){
+                if (a.IsTribute() != null) {conditionsMet[i] = true; continue;}//tributes;
+                if (a.HasRogueEquipped()){//Battle-Ready
+                    foreach (Equipment e in localUser.GetEquipped()){
+                        if (e != null && e.IsRogue()) {conditionsMet[i] = true; break;}
+                    } if (conditionsMet[i] == true) continue;
                 }
-                if (spellCount >= a.HaveSpells()){
+                if (a.HasMageEquipped()){//Battle-Ready
+                    foreach (Equipment e in localUser.GetEquipped()){
+                        if (e != null && e.IsMage()) {conditionsMet[i] = true; break;}
+                    } if (conditionsMet[i] == true) continue;
+                }
+                if (a.HasWarriorEquipped()){//Battle-Ready
+                    foreach (Equipment e in localUser.GetEquipped()){
+                        if (e != null && e.IsWarrior()) {conditionsMet[i] = true; break;}
+                    } if (conditionsMet[i] == true) continue;
+                }
+                if (a.HasClericEquipped()){//Battle-Ready
+                    foreach (Equipment e in localUser.GetEquipped()){
+                        if (e != null && e.IsCleric()) {conditionsMet[i] = true; break;}
+                    } if (conditionsMet[i] == true) continue;
+                }//Test/Display
+                if (a.ExtraCardsToDraw() > 0 && extraDrawnHigh >= a.ExtraCardsToDraw()){
                     conditionsMet[i] = true; continue;
-                }
-            }//Deadly Force
-            if (a.DefeatFastTier() > 0 && monsterTier >= a.DefeatFastTier() && noTurnForMonster){
-                conditionsMet[i] = true; continue;
-            }//Stalwart
-            if (a.HaveArmor() && a.HaveEvade() && a.HaveShields() && a.HavePowerShields()){
-                bool hasArmor = false;
-                bool hasEvade = remainingEvade > 0;
-                bool hasShields = remainingShields > 0;
-                bool hasPowerShields = remainingPowerShields > 0;
-                foreach (Equipment e in localUser.GetEquipped()){
-                    if (e != null){
-                        hasArmor = hasArmor || e.HasArmor();
-                        hasEvade = hasEvade || e.HasEvade();
-                        hasShields = hasShields || e.getCurrentShieldValues()[0] > 0;
-                        hasPowerShields = hasPowerShields || e.getCurrentShieldValues()[1] > 0;
-                    }
-                }
-                if (hasArmor && hasEvade && hasShields && hasPowerShields){
+                }//Test/Display
+                if (a.PreventDamage() > 0 && damagePreventedHigh >= a.PreventDamage()){
                     conditionsMet[i] = true; continue;
-                }
-            }//Contingent
-            if (a.HaveRegen() && a.HavePierce() && a.HaveHoming() && a.HaveShieldBreak()){
-                bool hasRegen = false;
-                bool hasHoming = false;
-                bool hasPierce = false;
-                bool hasShieldBreak = false;
-                foreach (Equipment e in localUser.GetEquipped()){
-                    if (e != null){
-                        hasRegen = hasRegen || e.HasRegen();
-                        hasHoming = hasHoming || e.isHoming();
-                        hasPierce = hasPierce || e.isPierce();
-                        hasShieldBreak = hasShieldBreak || e.hasShieldBreak();
-                    }
-                }
-                if (hasRegen && hasHoming && hasPierce && hasShieldBreak){
+                }//Test/Display
+                if (a.DealDamage() > 0 && damageDealtHigh >= a.DealDamage()){
                     conditionsMet[i] = true; continue;
+                }//Test/Display
+                if (a.PlayCards() > 0 && cardsPlayedHigh >= a.PlayCards()){
+                    conditionsMet[i] = true; continue;
+                }//Eliminate bounties
+                if (a.DefeatMonster() != null && a.DefeatMonster().CompareTo(monsterType)==0){
+                    conditionsMet[i] = true; continue;
+                }//Path of
+                if (a.PlayDefense() > 0 && defensesPlayedHigh >= a.PlayDefense()){
+                    conditionsMet[i] = true; continue;
+                }//Path of
+                if (a.PlayAttack() > 0 && attacksPlayedHigh >= a.PlayAttack()){
+                    conditionsMet[i] = true; continue;
+                }//Path of
+                if (a.PlayTechnique() > 0 && techniquesPlayedHigh >= a.PlayTechnique()){
+                    conditionsMet[i] = true; continue;
+                }//Path of
+                if (a.PlayDifferent() > 0 && typesPlayedHigh >= a.PlayDifferent()){
+                    conditionsMet[i] = true; continue;
+                }//Spell Slinger
+                if (a.PlaySpells() > 0 && a.HaveSpells() > 0 && spellsPlayedHigh >= a.PlaySpells()){
+                    int spellCount = 0;
+                    foreach (Ability s in localUser.Deck().InspectDeck()) {
+                        if (s.GetCardType().CompareTo("Spell") == 0 && s.GetSource().CompareTo("Shop")==0){
+                            spellCount++;
+                        }
+                    }
+                    if (spellCount >= a.HaveSpells()){
+                        conditionsMet[i] = true; continue;
+                    }
+                }//Deadly Force
+                if (a.DefeatFastTier() > 0 && monsterTier >= a.DefeatFastTier() && noTurnForMonster){
+                    conditionsMet[i] = true; continue;
+                }//Stalwart
+                if (a.HaveArmor() && a.HaveEvade() && a.HaveShields() && a.HavePowerShields()){
+                    bool hasArmor = false;
+                    bool hasEvade = remainingEvade > 0;
+                    bool hasShields = remainingShields > 0;
+                    bool hasPowerShields = remainingPowerShields > 0;
+                    foreach (Equipment e in localUser.GetEquipped()){
+                        if (e != null){
+                            hasArmor = hasArmor || e.HasArmor();
+                            hasEvade = hasEvade || e.HasEvade();
+                            hasShields = hasShields || e.getCurrentShieldValues()[0] > 0;
+                            hasPowerShields = hasPowerShields || e.getCurrentShieldValues()[1] > 0;
+                        }
+                    }
+                    if (hasArmor && hasEvade && hasShields && hasPowerShields){
+                        conditionsMet[i] = true; continue;
+                    }
+                }//Contingent
+                if (a.HaveRegen() && a.HavePierce() && a.HaveHoming() && a.HaveShieldBreak()){
+                    bool hasRegen = false;
+                    bool hasHoming = false;
+                    bool hasPierce = false;
+                    bool hasShieldBreak = false;
+                    foreach (Equipment e in localUser.GetEquipped()){
+                        if (e != null){
+                            hasRegen = hasRegen || e.HasRegen();
+                            hasHoming = hasHoming || e.isHoming();
+                            hasPierce = hasPierce || e.isPierce();
+                            hasShieldBreak = hasShieldBreak || e.hasShieldBreak();
+                        }
+                    }
+                    if (hasRegen && hasHoming && hasPierce && hasShieldBreak){
+                        conditionsMet[i] = true; continue;
+                    }
                 }
             }
         }
@@ -3476,40 +3585,40 @@ public class DungeonManager : MonoBehaviour
         txtTradeGoldOther.text = ""+tradeGoldOther;
         txtTradeVPLocal.text = ""+tradeVPPlayer;
         txtTradeVPOther.text = ""+tradeVPOther;
-        if (tradeAcceptedOther) btnTradeActiveAccept.GetComponent<Text>().color = Color.green;
-        else btnTradeActiveAccept.GetComponent<Text>().color = Color.black;
-        if (tradeAbility1Player != null) btnTradeAbility1.GetComponent<Text>().text = tradeAbility1Player.getName();
-        else  btnTradeAbility1.GetComponent<Text>().text = "";
-        if (tradeAbility2Player != null) btnTradeAbility2.GetComponent<Text>().text = tradeAbility2Player.getName();
-        else  btnTradeAbility2.GetComponent<Text>().text = "";
-        if (tradeAspiration1Player != null) btnTradeAspiration1.GetComponent<Text>().text = tradeAspiration1Player.GetName();
-        else  btnTradeAspiration1.GetComponent<Text>().text = "";
-        if (tradeAspiration2Player != null) btnTradeAspiration2.GetComponent<Text>().text = tradeAspiration2Player.GetName();
-        else  btnTradeAspiration2.GetComponent<Text>().text = "";
-        if (tradeItem1Player != null) btnTradeItem1.GetComponent<Text>().text = tradeItem1Player.getName();
-        else  btnTradeItem1.GetComponent<Text>().text = "";
-        if (tradeItem2Player != null) btnTradeItem2.GetComponent<Text>().text = tradeItem2Player.getName();
-        else  btnTradeItem2.GetComponent<Text>().text = "";
-        if (tradeTrophy1Player != null) btnTradeTrophy1.GetComponent<Text>().text = tradeTrophy1Player.GetName();
-        else  btnTradeTrophy1.GetComponent<Text>().text = "";
-        if (tradeTrophy2Player != null) btnTradeTrophy2.GetComponent<Text>().text = tradeTrophy2Player.GetName();
-        else  btnTradeTrophy2.GetComponent<Text>().text = "";
-        if (tradeAbility1Other != null) btnTradeAbility1.GetComponent<Text>().text = tradeAbility1Other;
-        else  btnTradeAbility1.GetComponent<Text>().text = "";
-        if (tradeAbility2Other != null) btnTradeAbility2.GetComponent<Text>().text = tradeAbility2Other;
-        else  btnTradeAbility2.GetComponent<Text>().text = "";
-        if (tradeAspiration1Other != null) btnTradeAspiration1.GetComponent<Text>().text = tradeAspiration1Other;
-        else  btnTradeAspiration1.GetComponent<Text>().text = "";
-        if (tradeAspiration2Other != null) btnTradeAspiration2.GetComponent<Text>().text = tradeAspiration2Other;
-        else  btnTradeAspiration2.GetComponent<Text>().text = "";
-        if (tradeItem1Other != null) btnTradeItem1.GetComponent<Text>().text = tradeItem1Other;
-        else  btnTradeItem1.GetComponent<Text>().text = "";
-        if (tradeItem2Other != null) btnTradeItem2.GetComponent<Text>().text = tradeItem2Other;
-        else  btnTradeItem2.GetComponent<Text>().text = "";
-        if (tradeTrophy1Other != null) btnTradeTrophy1.GetComponent<Text>().text = tradeTrophy1Other;
-        else  btnTradeTrophy1.GetComponent<Text>().text = "";
-        if (tradeTrophy2Other != null) btnTradeTrophy2.GetComponent<Text>().text = tradeTrophy2Other;
-        else  btnTradeTrophy2.GetComponent<Text>().text = "";
+        if (tradeAcceptedOther) btnTradeActiveAccept.GetComponentInChildren<Text>().color = Color.green;
+        else btnTradeActiveAccept.GetComponentInChildren<Text>().color = Color.black;
+        if (tradeAbility1Player != null) btnTradeAbility1.GetComponentInChildren<Text>().text = tradeAbility1Player.getName();
+        else  btnTradeAbility1.GetComponentInChildren<Text>().text = "";
+        if (tradeAbility2Player != null) btnTradeAbility2.GetComponentInChildren<Text>().text = tradeAbility2Player.getName();
+        else  btnTradeAbility2.GetComponentInChildren<Text>().text = "";
+        if (tradeAspiration1Player != null) btnTradeAspiration1.GetComponentInChildren<Text>().text = tradeAspiration1Player.GetName();
+        else  btnTradeAspiration1.GetComponentInChildren<Text>().text = "";
+        if (tradeAspiration2Player != null) btnTradeAspiration2.GetComponentInChildren<Text>().text = tradeAspiration2Player.GetName();
+        else  btnTradeAspiration2.GetComponentInChildren<Text>().text = "";
+        if (tradeItem1Player != null) btnTradeItem1.GetComponentInChildren<Text>().text = tradeItem1Player.getName();
+        else  btnTradeItem1.GetComponentInChildren<Text>().text = "";
+        if (tradeItem2Player != null) btnTradeItem2.GetComponentInChildren<Text>().text = tradeItem2Player.getName();
+        else  btnTradeItem2.GetComponentInChildren<Text>().text = "";
+        if (tradeTrophy1Player != null) btnTradeTrophy1.GetComponentInChildren<Text>().text = tradeTrophy1Player.GetName();
+        else  btnTradeTrophy1.GetComponentInChildren<Text>().text = "";
+        if (tradeTrophy2Player != null) btnTradeTrophy2.GetComponentInChildren<Text>().text = tradeTrophy2Player.GetName();
+        else  btnTradeTrophy2.GetComponentInChildren<Text>().text = "";
+        if (tradeAbility1Other != null) txtTradeAbility1.text = tradeAbility1Other;
+        else  txtTradeAbility1.text = "";
+        if (tradeAbility2Other != null) txtTradeAbility2.text = tradeAbility2Other;
+        else  txtTradeAbility2.text = "";
+        if (tradeAspiration1Other != null) txtTradeAspiration1.text = tradeAspiration1Other;
+        else  txtTradeAspiration1.text = "";
+        if (tradeAspiration2Other != null) txtTradeAspiration2.text = tradeAspiration2Other;
+        else  txtTradeAspiration2.text = "";
+        if (tradeItem1Other != null) txtTradeItem1.text = tradeItem1Other;
+        else  txtTradeItem1.text = "";
+        if (tradeItem2Other != null) txtTradeItem2.text = tradeItem2Other;
+        else  txtTradeItem2.text = "";
+        if (tradeTrophy1Other != null) txtTradeTrophy1.text = tradeTrophy1Other;
+        else  txtTradeTrophy1.text = "";
+        if (tradeTrophy2Other != null) txtTradeTrophy2.text = tradeTrophy2Other;
+        else  txtTradeTrophy2.text = "";
         if (tradeGoldPlayer > 0) btnTradeGoldDecrement.gameObject.SetActive(true);
         else btnTradeGoldDecrement.gameObject.SetActive(false);
         if (tradeGoldPlayer < localUser.getGold()) btnTradeGoldIncrement.gameObject.SetActive(true);
@@ -3938,6 +4047,31 @@ public class DungeonManager : MonoBehaviour
             txtPreventP4.text = players[3].GetName();
             txtPreventAmountP4.text = assignedPrevention[3]+"/"+damageBeingDealt[3];
         } else txtPreventP4.gameObject.SetActive(false);
+    }
+    void ReloadBossLobby(){
+        bool allReady = true;
+        txtBLP1Name.text = players[0].GetName();
+        if (joiningBoss[0]) txtBLP1Name.color = Color.green;
+        else if (passingBoss[0]) txtBLP1Name.color = Color.red;
+        else allReady = false;
+        txtBLP2Name.text = players[1].GetName();
+        if (joiningBoss[1]) txtBLP2Name.color = Color.green;
+        else if (passingBoss[1]) txtBLP2Name.color = Color.red;
+        else allReady = false;
+        if (players.Count >= 3){
+            txtBLP3Name.text = players[2].GetName();
+            if (joiningBoss[2]) txtBLP3Name.color = Color.green;
+            else if (passingBoss[2]) txtBLP3Name.color = Color.red;
+            else allReady = false;
+        } else txtBLP3Name.gameObject.SetActive(false);
+        if (players.Count >= 4){
+            txtBLP4Name.text = players[3].GetName();
+            if (joiningBoss[3]) txtBLP4Name.color = Color.green;
+            else if (passingBoss[3]) txtBLP4Name.color = Color.red;
+            else allReady = false;
+        } else txtBLP4Name.gameObject.SetActive(false);
+        if (allReady && localUser.IsLead()) btnBLReady.gameObject.SetActive(true);
+        else btnBLReady.gameObject.SetActive(false);
     }
 
 }

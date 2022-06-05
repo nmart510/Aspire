@@ -157,6 +157,8 @@ public class LobbyManager : MonoBehaviour
                         vs.setMonList(monsterList);
                         vs.SetAspirations(aspirationList);
                         vs.setClasses(LoadClasses());
+                        vs.setBossList(LoadBosses());
+                        vs.setBossMods(LoadBossMods());
                         SceneManager.LoadScene("Shop");
                     }
                 }
@@ -203,7 +205,7 @@ public class LobbyManager : MonoBehaviour
         string classAblList = Path.Combine(filepath,@"ClassAbilities.txt");
         lines = File.ReadAllLines(classAblList);
         for (int i = 0; i < lines.Length; i++){
-            string cardName = lines[i];
+            string cardName = lines[i].Split(':')[0];
             Ability a = new Ability();
             a.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"));
             temp.Add(a);
@@ -277,6 +279,31 @@ public class LobbyManager : MonoBehaviour
         return temp;
     }
     List<Boss> LoadBosses(){
-        
+        List<Boss> temp = new List<Boss>();
+        string filepath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName,@"AspireAssets\Bosses\");
+        string bossList = Path.Combine(filepath,@"BossList.txt");
+        var lines = File.ReadAllLines(bossList);
+        for (int i = 0; i < lines.Length; i++){
+            Boss b = new Boss();
+            b.loadCard(Path.Combine(filepath,@"Info\"+lines[i]+".txt"),Path.Combine(filepath,@"Images\"+lines[i]+".png"),false);
+            temp.Add(b);
+        }
+        return temp;
+    }
+    List<Boss> LoadBossMods(){
+        List<Boss> temp = new List<Boss>();
+        string filepath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName,@"AspireAssets\BossMods\");
+        string bossList = Path.Combine(filepath,@"BossModList.txt");
+        var lines = File.ReadAllLines(bossList);
+        for (int i = 0; i < lines.Length; i++){
+            int.TryParse(lines[i].Split(':')[1], out int num);
+            if(num == 1 || num == players.Count){
+                string cardName = lines[i].Split(':')[0];
+                Boss b = new Boss();
+                b.loadCard(Path.Combine(filepath,@"Info\"+cardName+".txt"),Path.Combine(filepath,@"Images\"+cardName+".png"),true);
+                temp.Add(b);
+            }
+        }
+        return temp;
     }
 }

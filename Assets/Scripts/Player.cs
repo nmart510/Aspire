@@ -102,6 +102,9 @@ public class Player : MonoBehaviour
     public int getVP(){
         return victoryPoints;
     }
+    public void setVP(int amount){
+        victoryPoints = amount;
+    }
     public bool InCombat(){
         return inCombat;
     }

@@ -5,6 +5,9 @@ using UnityEngine;
 public class ValueStorage : MonoBehaviour
 {
     Player localPlayer;
+    Boss theBoss;
+    List<Boss> bossList;
+    List<Boss> bossMods;
     List<Player> playerList;
     List<PlayerClass> availableClasses;
     List<Ability> shopAbilities;
@@ -87,6 +90,7 @@ public class ValueStorage : MonoBehaviour
         return currentAspirations;
     }
     public Aspiration PeekAspiration(int row, int depth){
+        if (currentAspirations[row].Count == 0) return null;
         return currentAspirations[row][depth];
     }
     public void PushAspiration(int row, Aspiration a){
@@ -108,6 +112,24 @@ public class ValueStorage : MonoBehaviour
     }
     public void RemoveClass(PlayerClass p){
         availableClasses.Remove(p);
+    }
+    public List<Boss> getBossList(){
+        return bossList;
+    }
+    public List<Boss> getBossMods(){
+        return bossMods;
+    }
+    public void setBossList(List<Boss> bl){
+        bossList = bl;
+    }
+    public void setBossMods(List<Boss> bm){
+        bossMods = bm;
+    }
+    public Boss getBoss(){
+        return theBoss;
+    }
+    public void setBoss(Boss boss){
+        theBoss = boss;
     }
 
 }

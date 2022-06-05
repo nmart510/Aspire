@@ -183,6 +183,7 @@ public class ShopManager : MonoBehaviour
             pnlInitialShop.SetActive(true);
             pnlShop.SetActive(false);
         } else {
+            pnlClasses.SetActive(true);
             pnlInitialShop.SetActive(false);
             pnlShop.SetActive(true);
         }
@@ -234,7 +235,7 @@ public class ShopManager : MonoBehaviour
             txtTradeOfferMessage.text = "Trade Request sent to "+tradePartner.GetName();
             localUser.Write("*TRADEREQUEST,"+tradePartner.GetName()+","+localUser.GetName());
         });
-        btnTradeP2.onClick.AddListener(delegate{tradePartner = players[2]; 
+        btnTradeP3.onClick.AddListener(delegate{tradePartner = players[2]; 
             pnlTradeOffer.SetActive(true);
             btnTradeOfferAccept.gameObject.SetActive(false);
             btnTradeOfferReject.gameObject.SetActive(false);
@@ -242,7 +243,7 @@ public class ShopManager : MonoBehaviour
             txtTradeOfferMessage.text = "Trade Request sent to "+tradePartner.GetName();
             localUser.Write("*TRADEREQUEST,"+tradePartner.GetName()+","+localUser.GetName());
         });
-        btnTradeP2.onClick.AddListener(delegate{tradePartner = players[3]; 
+        btnTradeP4.onClick.AddListener(delegate{tradePartner = players[3]; 
             pnlTradeOffer.SetActive(true);
             btnTradeOfferAccept.gameObject.SetActive(false);
             btnTradeOfferReject.gameObject.SetActive(false);
@@ -733,9 +734,23 @@ public class ShopManager : MonoBehaviour
             EquipmentBeingSold = null; TrophyBeingSold = null; AbilityBeingSold = null;});
         btnAddToDeck.onClick.AddListener(delegate{pnlSeller.SetActive(false); pnlAdder.SetActive(false);
             localUser.Deck().Add(EquipmentBeingSold.getLinkedAbility()); 
+            if (localUser.Arsenal().Count - 6 == ArsenalOffset && ArsenalOffset > 0) ArsenalOffset--;
             localUser.Arsenal().Remove(EquipmentBeingSold); viewArsenal.Remove(EquipmentBeingSold);
             EquipmentBeingSold = null; ReloadArsenalView();});
         localUser.Write("*SETUP");
+        btnTradeP2.GetComponentInChildren<Text>().text = players[1].GetName();
+        if (players.Count > 2){
+            btnTradeP3.GetComponentInChildren<Text>().text = players[2].GetName();
+        } else {
+            btnTradeP3.gameObject.SetActive(false);
+        }
+        if (players.Count > 3){
+            btnTradeP4.GetComponentInChildren<Text>().text = players[3].GetName();
+        } else {
+            btnTradeP4.gameObject.SetActive(false);
+        }
+        ReloadAspirations();
+        ReloadClasses();
     }
 
     // Update is called once per frame
@@ -787,6 +802,16 @@ public class ShopManager : MonoBehaviour
                     }
                     ReloadAspirations();
                 }
+                if (message[0].CompareTo("*REQUESTASPIRATION")==0){
+                    int.TryParse(message[1], out int i);
+                    foreach (Aspiration a in vs.GetAspirations()) {
+                        if (a.GetName().CompareTo(message[2])==0){
+                            vs.PushAspiration(i,a.Clone());
+                            break;
+                        }
+                    }
+                    ReloadAspirations();
+                }
                 if (message[0].CompareTo("*CLAIMCLASS") == 0){
                     if (TargetClass != null && message[1].CompareTo(TargetClass)==0){
                         pnlClassAquisition.SetActive(false);
@@ -797,11 +822,13 @@ public class ShopManager : MonoBehaviour
                         selectedClassItem = null;
                         selectedClassTrophy = null;
                     }
+                    PlayerClass temp = null;
                     foreach (PlayerClass pc in vs.getAvailableClasses()){
                         if (pc.getName().CompareTo(message[1])==0){
-                            vs.getAvailableClasses().Remove(pc);
+                            temp = pc;
                         }
                     }
+                    vs.getAvailableClasses().Remove(temp);
                     ReloadClasses();
                 }
                 if (message[0].CompareTo("*TRADEREQUEST") == 0){
@@ -818,6 +845,7 @@ public class ShopManager : MonoBehaviour
                         btnTradeOfferAccept.gameObject.SetActive(true);
                         btnTradeOfferReject.gameObject.SetActive(true);
                         btnTradeOfferCancel.gameObject.SetActive(false);
+                        txtTradeOfferMessage.text = "Trade Offer From " + tradePartner.GetName();
                     }
                 }
                 if (message[0].CompareTo("*TRADECANCEL") == 0){
@@ -961,7 +989,7 @@ public class ShopManager : MonoBehaviour
                 }
                 if (message[0].CompareTo("*BOSS") == 0) {
                     Debug.Log("Proceed to boss!");
-                    SceneManager.LoadScene("Boss");
+                    SceneManager.LoadScene("Dungeon");
                 }
             }
         }
@@ -1320,45 +1348,53 @@ public class ShopManager : MonoBehaviour
         AbilityBeingPurchased = null;
     }
     void ReloadAspirations(){
-        btnAspiration1.image.sprite = vs.PeekAspiration(0,aspirationOffset[0]).Image();
-        btnAspiration2.image.sprite = vs.PeekAspiration(1,aspirationOffset[1]).Image();
-        btnAspiration3.image.sprite = vs.PeekAspiration(2,aspirationOffset[2]).Image();
-        btnAspiration4.image.sprite = vs.PeekAspiration(3,aspirationOffset[3]).Image();
-        if (vs.AspirationCount(0) > 1){
-            if (aspirationOffset[0] > 0) btnAsp1ScrollDown.gameObject.SetActive(true);
-            else btnAsp1ScrollDown.gameObject.SetActive(false);
-            if (aspirationOffset[0] < vs.AspirationCount(0)-1) btnAsp1ScrollUp.gameObject.SetActive(true);
-            else btnAsp1ScrollUp.gameObject.SetActive(false);
-        } else {
-            btnAsp1ScrollDown.gameObject.SetActive(false);
-            btnAsp1ScrollUp.gameObject.SetActive(false);
+        if (vs.AspirationCount(0) > 0){
+            btnAspiration1.image.sprite = vs.PeekAspiration(0,aspirationOffset[0]).Image();
+            if (vs.AspirationCount(0) > 1){
+                if (aspirationOffset[0] > 0) btnAsp1ScrollDown.gameObject.SetActive(true);
+                else btnAsp1ScrollDown.gameObject.SetActive(false);
+                if (aspirationOffset[0] < vs.AspirationCount(0)-1) btnAsp1ScrollUp.gameObject.SetActive(true);
+                else btnAsp1ScrollUp.gameObject.SetActive(false);
+            } else {
+                btnAsp1ScrollDown.gameObject.SetActive(false);
+                btnAsp1ScrollUp.gameObject.SetActive(false);
+            }
         }
-        if (vs.AspirationCount(1) > 1){
-            if (aspirationOffset[1] > 0) btnAsp2ScrollDown.gameObject.SetActive(true);
-            else btnAsp2ScrollDown.gameObject.SetActive(false);
-            if (aspirationOffset[1] < vs.AspirationCount(1)-1) btnAsp2ScrollUp.gameObject.SetActive(true);
-            else btnAsp2ScrollUp.gameObject.SetActive(false);
-        } else {
-            btnAsp2ScrollDown.gameObject.SetActive(false);
-            btnAsp2ScrollUp.gameObject.SetActive(false);
+        if (vs.AspirationCount(1) > 0){
+            btnAspiration2.image.sprite = vs.PeekAspiration(1,aspirationOffset[1]).Image();
+            if (vs.AspirationCount(1) > 1){
+                if (aspirationOffset[1] > 0) btnAsp2ScrollDown.gameObject.SetActive(true);
+                else btnAsp2ScrollDown.gameObject.SetActive(false);
+                if (aspirationOffset[1] < vs.AspirationCount(1)-1) btnAsp2ScrollUp.gameObject.SetActive(true);
+                else btnAsp2ScrollUp.gameObject.SetActive(false);
+            } else {
+                btnAsp2ScrollDown.gameObject.SetActive(false);
+                btnAsp2ScrollUp.gameObject.SetActive(false);
+            }
         }
-        if (vs.AspirationCount(2) > 1){
-            if (aspirationOffset[2] > 0) btnAsp3ScrollDown.gameObject.SetActive(true);
-            else btnAsp3ScrollDown.gameObject.SetActive(false);
-            if (aspirationOffset[2] < vs.AspirationCount(2)-1) btnAsp3ScrollUp.gameObject.SetActive(true);
-            else btnAsp3ScrollUp.gameObject.SetActive(false);
-        } else {
-            btnAsp3ScrollDown.gameObject.SetActive(false);
-            btnAsp3ScrollUp.gameObject.SetActive(false);
+        if (vs.AspirationCount(2) > 0){
+            btnAspiration3.image.sprite = vs.PeekAspiration(2,aspirationOffset[2]).Image();
+            if (vs.AspirationCount(2) > 1){
+                if (aspirationOffset[2] > 0) btnAsp3ScrollDown.gameObject.SetActive(true);
+                else btnAsp3ScrollDown.gameObject.SetActive(false);
+                if (aspirationOffset[2] < vs.AspirationCount(2)-1) btnAsp3ScrollUp.gameObject.SetActive(true);
+                else btnAsp3ScrollUp.gameObject.SetActive(false);
+            } else {
+                btnAsp3ScrollDown.gameObject.SetActive(false);
+                btnAsp3ScrollUp.gameObject.SetActive(false);
+            }
         }
-        if (vs.AspirationCount(3) > 1){
-            if (aspirationOffset[3] > 0) btnAsp4ScrollDown.gameObject.SetActive(true);
-            else btnAsp4ScrollDown.gameObject.SetActive(false);
-            if (aspirationOffset[3] < vs.AspirationCount(3)-1) btnAsp4ScrollUp.gameObject.SetActive(true);
-            else btnAsp4ScrollUp.gameObject.SetActive(false);
-        } else {
-            btnAsp4ScrollDown.gameObject.SetActive(false);
-            btnAsp4ScrollUp.gameObject.SetActive(false);
+        if (vs.AspirationCount(3) > 0){
+            btnAspiration4.image.sprite = vs.PeekAspiration(3,aspirationOffset[3]).Image();
+            if (vs.AspirationCount(3) > 1){
+                if (aspirationOffset[3] > 0) btnAsp4ScrollDown.gameObject.SetActive(true);
+                else btnAsp4ScrollDown.gameObject.SetActive(false);
+                if (aspirationOffset[3] < vs.AspirationCount(3)-1) btnAsp4ScrollUp.gameObject.SetActive(true);
+                else btnAsp4ScrollUp.gameObject.SetActive(false);
+            } else {
+                btnAsp4ScrollDown.gameObject.SetActive(false);
+                btnAsp4ScrollUp.gameObject.SetActive(false);
+            }
         }
     }
     void ReloadTrophyView(){
@@ -1441,40 +1477,40 @@ public class ShopManager : MonoBehaviour
         txtTradeGoldOther.text = ""+tradeGoldOther;
         txtTradeVPLocal.text = ""+tradeVPPlayer;
         txtTradeVPOther.text = ""+tradeVPOther;
-        if (tradeAcceptedOther) btnTradeActiveAccept.GetComponent<Text>().color = Color.green;
-        else btnTradeActiveAccept.GetComponent<Text>().color = Color.black;
-        if (tradeAbility1Player != null) btnTradeAbility1.GetComponent<Text>().text = tradeAbility1Player.getName();
-        else  btnTradeAbility1.GetComponent<Text>().text = "";
-        if (tradeAbility2Player != null) btnTradeAbility2.GetComponent<Text>().text = tradeAbility2Player.getName();
-        else  btnTradeAbility2.GetComponent<Text>().text = "";
-        if (tradeAspiration1Player != null) btnTradeAspiration1.GetComponent<Text>().text = tradeAspiration1Player.GetName();
-        else  btnTradeAspiration1.GetComponent<Text>().text = "";
-        if (tradeAspiration2Player != null) btnTradeAspiration2.GetComponent<Text>().text = tradeAspiration2Player.GetName();
-        else  btnTradeAspiration2.GetComponent<Text>().text = "";
-        if (tradeItem1Player != null) btnTradeItem1.GetComponent<Text>().text = tradeItem1Player.getName();
-        else  btnTradeItem1.GetComponent<Text>().text = "";
-        if (tradeItem2Player != null) btnTradeItem2.GetComponent<Text>().text = tradeItem2Player.getName();
-        else  btnTradeItem2.GetComponent<Text>().text = "";
-        if (tradeTrophy1Player != null) btnTradeTrophy1.GetComponent<Text>().text = tradeTrophy1Player.GetName();
-        else  btnTradeTrophy1.GetComponent<Text>().text = "";
-        if (tradeTrophy2Player != null) btnTradeTrophy2.GetComponent<Text>().text = tradeTrophy2Player.GetName();
-        else  btnTradeTrophy2.GetComponent<Text>().text = "";
-        if (tradeAbility1Other != null) btnTradeAbility1.GetComponent<Text>().text = tradeAbility1Other;
-        else  btnTradeAbility1.GetComponent<Text>().text = "";
-        if (tradeAbility2Other != null) btnTradeAbility2.GetComponent<Text>().text = tradeAbility2Other;
-        else  btnTradeAbility2.GetComponent<Text>().text = "";
-        if (tradeAspiration1Other != null) btnTradeAspiration1.GetComponent<Text>().text = tradeAspiration1Other;
-        else  btnTradeAspiration1.GetComponent<Text>().text = "";
-        if (tradeAspiration2Other != null) btnTradeAspiration2.GetComponent<Text>().text = tradeAspiration2Other;
-        else  btnTradeAspiration2.GetComponent<Text>().text = "";
-        if (tradeItem1Other != null) btnTradeItem1.GetComponent<Text>().text = tradeItem1Other;
-        else  btnTradeItem1.GetComponent<Text>().text = "";
-        if (tradeItem2Other != null) btnTradeItem2.GetComponent<Text>().text = tradeItem2Other;
-        else  btnTradeItem2.GetComponent<Text>().text = "";
-        if (tradeTrophy1Other != null) btnTradeTrophy1.GetComponent<Text>().text = tradeTrophy1Other;
-        else  btnTradeTrophy1.GetComponent<Text>().text = "";
-        if (tradeTrophy2Other != null) btnTradeTrophy2.GetComponent<Text>().text = tradeTrophy2Other;
-        else  btnTradeTrophy2.GetComponent<Text>().text = "";
+        if (tradeAcceptedOther) btnTradeActiveAccept.GetComponentInChildren<Text>().color = Color.green;
+        else btnTradeActiveAccept.GetComponentInChildren<Text>().color = Color.black;
+        if (tradeAbility1Player != null) btnTradeAbility1.GetComponentInChildren<Text>().text = tradeAbility1Player.getName();
+        else  btnTradeAbility1.GetComponentInChildren<Text>().text = "";
+        if (tradeAbility2Player != null) btnTradeAbility2.GetComponentInChildren<Text>().text = tradeAbility2Player.getName();
+        else  btnTradeAbility2.GetComponentInChildren<Text>().text = "";
+        if (tradeAspiration1Player != null) btnTradeAspiration1.GetComponentInChildren<Text>().text = tradeAspiration1Player.GetName();
+        else  btnTradeAspiration1.GetComponentInChildren<Text>().text = "";
+        if (tradeAspiration2Player != null) btnTradeAspiration2.GetComponentInChildren<Text>().text = tradeAspiration2Player.GetName();
+        else  btnTradeAspiration2.GetComponentInChildren<Text>().text = "";
+        if (tradeItem1Player != null) btnTradeItem1.GetComponentInChildren<Text>().text = tradeItem1Player.getName();
+        else  btnTradeItem1.GetComponentInChildren<Text>().text = "";
+        if (tradeItem2Player != null) btnTradeItem2.GetComponentInChildren<Text>().text = tradeItem2Player.getName();
+        else  btnTradeItem2.GetComponentInChildren<Text>().text = "";
+        if (tradeTrophy1Player != null) btnTradeTrophy1.GetComponentInChildren<Text>().text = tradeTrophy1Player.GetName();
+        else  btnTradeTrophy1.GetComponentInChildren<Text>().text = "";
+        if (tradeTrophy2Player != null) btnTradeTrophy2.GetComponentInChildren<Text>().text = tradeTrophy2Player.GetName();
+        else  btnTradeTrophy2.GetComponentInChildren<Text>().text = "";
+        if (tradeAbility1Other != null) txtTradeAbility1.text = tradeAbility1Other;
+        else  txtTradeAbility1.text = "";
+        if (tradeAbility2Other != null) txtTradeAbility2.text = tradeAbility2Other;
+        else  txtTradeAbility2.text = "";
+        if (tradeAspiration1Other != null) txtTradeAspiration1.text = tradeAspiration1Other;
+        else  txtTradeAspiration1.text = "";
+        if (tradeAspiration2Other != null) txtTradeAspiration2.text = tradeAspiration2Other;
+        else  txtTradeAspiration2.text = "";
+        if (tradeItem1Other != null) txtTradeItem1.text = tradeItem1Other;
+        else  txtTradeItem1.text = "";
+        if (tradeItem2Other != null) txtTradeItem2.text = tradeItem2Other;
+        else  txtTradeItem2.text = "";
+        if (tradeTrophy1Other != null) txtTradeTrophy1.text = tradeTrophy1Other;
+        else  txtTradeTrophy1.text = "";
+        if (tradeTrophy2Other != null) txtTradeTrophy2.text = tradeTrophy2Other;
+        else  txtTradeTrophy2.text = "";
         if (tradeGoldPlayer > 0) btnTradeGoldDecrement.gameObject.SetActive(true);
         else btnTradeGoldDecrement.gameObject.SetActive(false);
         if (tradeGoldPlayer < localUser.getGold()) btnTradeGoldIncrement.gameObject.SetActive(true);
@@ -1783,11 +1819,13 @@ public class ShopManager : MonoBehaviour
             cleric = null;
             rogue = null;
             mage = null;
+            Debug.Log("Reloading all available classes");
             foreach (PlayerClass pc in vs.getAvailableClasses()){
+                Debug.Log("Classes Reloaded: "+pc.getName());
                 if (pc.getName().CompareTo("Warrior")==0) warrior = pc;
                 if (pc.getName().CompareTo("Cleric")==0) cleric = pc;
                 if (pc.getName().CompareTo("Rogue")==0) rogue = pc;
-                if (pc.getName().CompareTo("mage")==0) mage = pc;
+                if (pc.getName().CompareTo("Mage")==0) mage = pc;
             }
             if (warrior != null) {
                 btnWarriorClass.gameObject.SetActive(true);
@@ -1907,9 +1945,6 @@ public class ShopManager : MonoBehaviour
                 sum+=f;
             if (sum > 0)
                 viewClassItem.Add(a);
-        }
-        foreach (Equipment e in localUser.Arsenal()) {
-            if (e.GetSource().CompareTo("Basic")!=0) viewClassItem.Add(e);
         }
         if (viewClassItem.Count > 0){
             btnClassItem1.gameObject.SetActive(true);
@@ -2081,7 +2116,7 @@ public class ShopManager : MonoBehaviour
             if (pc.getName().CompareTo(TargetClass)==0)
                 localUser.SetClass(pc);
         }//Swap out Strikes for the class version
-        for( int c = localUser.Deck().DeckCount()-1; c >= 0; c++){
+        for( int c = localUser.Deck().DeckCount()-1; c >= 0; c--){
             Ability temp = localUser.Deck().InspectDeck()[c];
             if (temp.getName().CompareTo("Strike")==0) localUser.Deck().Remove(temp);
         }
